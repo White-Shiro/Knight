@@ -19,6 +19,9 @@ void UKfMeleeAttackComponent::OnMontageNotifyEnd(FName NotifyName, const FBranch
 
 void UKfMeleeAttackComponent::BeginPlay() {
 	Super::BeginPlay();
+
+	_traceDelegate.BindUObject(this, &UKfMeleeAttackComponent::onTraceCompleted);
+
 	if (const auto* skeletalMesh = GetOwner()->FindComponentByClass<USkeletalMeshComponent>()) {
 		_animInstance = Cast<UKfCharacterAnimInstance>(skeletalMesh->GetAnimInstance());
 		OnAnimationInstanceInit(_animInstance);
@@ -53,7 +56,7 @@ void UKfMeleeAttackComponent::DoMeleeAttack() {
 	_animInstance->PlayMeleeMontage(_attackIndex);
 }
 
-bool UKfMeleeAttackComponent::TraceSwordHits(const FVector& start, const FVector& direction, float distance, float swordRad, FHitResult& outHitResult, bool isSegment) const {
+FTraceHandle UKfMeleeAttackComponent::TraceSwordHits(const FVector& start, const FVector& direction, float distance, float swordRad, bool isSegment) const {
 	FCollisionQueryParams traceParams;
 	traceParams.AddIgnoredActor(GetOwner());
 	traceParams.bTraceComplex = true;
@@ -70,20 +73,16 @@ bool UKfMeleeAttackComponent::TraceSwordHits(const FVector& start, const FVector
 	const FQuat swordQuat = FQuat::FindBetweenNormals(FVector::UpVector, direction);
 
 	const auto world = GetWorld();
-	const bool hit = world->SweepSingleByChannel(outHitResult, start, traceEnd, swordQuat, ECollisionChannel::ECC_Pawn, sweepHitBox, traceParams);
+	//const bool hit = world->SweepSingleByChannel(outHitResult, start, traceEnd, swordQuat, ECollisionChannel::ECC_Pawn, sweepHitBox, traceParams);
+	const auto h = world->AsyncSweepByChannel(EAsyncTraceType::Multi, start, traceEnd, swordQuat, ECollisionChannel::ECC_Pawn, sweepHitBox, traceParams, FCollisionResponseParams::DefaultResponseParam, &_traceDelegate, 0);
 
 	if (_drawHitBox) {
 		const auto center = start + (direction * halfHeight);
-		const auto color = hit ? FColor::Red : isSegment ? FColor::Blue : FColor::Yellow;
+		const auto color = isSegment ? FColor::Blue : FColor::Yellow;
 		DrawDebugCapsule(world, center, halfHeight, swordRad, swordQuat, color, _persistentLine, 0.1f, 0, 1.f);
-
-		if (hit) {
-			//UC_MSG("Hit %s", *outHitResult.GetActor()->GetName());
-			DrawDebugSphere(GetWorld(), outHitResult.ImpactPoint, 100.f, 4, FColor::Red, _persistentLine, 1.f, 0, 1.f);
-		}
 	}
 
-	return hit;
+	return h;
 }
 
 static FAttackReqeust CreateAttackRequest(const FHitResult& hitResult) {
@@ -107,16 +106,26 @@ void UKfMeleeAttackComponent::OnSwordHitResult(const FHitResult& hitResult) cons
 	if (pPfx) {
 		WxGamePlayUtil::PlayHitNormalEffect(_swordHitEffectSet.hitEffect_Ground.Get(), _swordHitEffectSet.effectSize, hitResult, world);
 	}
+
+	if (_drawHitBox) {
+		DrawDebugSphere(GetWorld(), hitResult.ImpactPoint, 100.f, 4, FColor::Red, _persistentLine, 1.f, 0, 1.f);
+	}
 }
 
-bool UKfMeleeAttackComponent::TrySwordHitOnce(const FVector& start, const FVector& direction, bool isSegment) const {
-	FHitResult hitResult = FHitResult();
-	const bool hit = TraceSwordHits(start, direction, _hitBoxLength, _hitBoxRadius, hitResult, isSegment);
-	if (hit) {
-		OnSwordHitResult(hitResult);
+void UKfMeleeAttackComponent::onTraceCompleted(const FTraceHandle& handle, FTraceDatum& data) {
+	if (data.OutHits.Num() > 0) {
+		for (const auto& hit : data.OutHits) {
+			OnSwordHitResult(hit);
+		}
 	}
+}
 
-	return hit;
+bool UKfMeleeAttackComponent::TrySwordHitOnce(const FVector& start, const FVector& direction, bool isSegment) {
+	const auto h = TraceSwordHits(start, direction, _hitBoxLength, _hitBoxRadius, isSegment);
+	if (h.IsValid()) {
+		_traceHandle = h;
+	}
+	return h.IsValid();
 }
 
 bool UKfMeleeAttackComponent::DoSwingHits(const UHitDetectionNotifyParam& param) {
@@ -168,7 +177,7 @@ bool UKfMeleeAttackComponent::DoSwingHits(const UHitDetectionNotifyParam& param)
 }
 
 void UKfMeleeAttackComponent::HandleAnimHitDetection(float frameDt, const UHitDetectionNotifyParam& param) {
-	if (DoSwingHits(param)) return;
+	DoSwingHits(param);
 }
 
 #if WITH_EDITOR

@@ -54,6 +54,8 @@ protected:
 	};
 
 	FTraceDirectionInfo prevTraceDirection;
+	FTraceDelegate _traceDelegate;
+	FTraceHandle _traceHandle;
 
 	virtual void BeginPlay() override;
 	virtual void OnAnimationInstanceInit(UKfCharacterAnimInstance* animInstance);
@@ -64,9 +66,10 @@ protected:
 	virtual void OnMontageNotifyEnd(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
 
 	bool DoSwingHits(const struct UHitDetectionNotifyParam& param);
-	bool TrySwordHitOnce(const FVector& start, const FVector& direction, bool isSegment = false) const;
-	bool TraceSwordHits(const FVector& start, const FVector& direction, float distance, float swordRad, FHitResult& outHitResult, bool isSegment = false) const;
+	bool TrySwordHitOnce(const FVector& start, const FVector& direction, bool isSegment = false);
+	FTraceHandle TraceSwordHits(const FVector& start, const FVector& direction, float distance, float swordRad, bool isSegment = false) const ;
 	void OnSwordHitResult(const FHitResult& hitResult) const;
+	virtual void onTraceCompleted(const FTraceHandle& handle, FTraceDatum& data);
 
 public:
 	virtual void TickComponent(float DeltaTime,
