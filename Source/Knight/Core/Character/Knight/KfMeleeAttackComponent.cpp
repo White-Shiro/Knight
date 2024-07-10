@@ -1,7 +1,10 @@
 ﻿#include "KfMeleeAttackComponent.h"
+
+#include "KfCharacter.h"
 #include "KfCharacterAnimInstance.h"
 #include "Knight/Core/Common.h"
-#include "Knight/Core/Combat/CombatInterface.h"
+#include "Knight/Core/Character/KfCharacterCommon.h"
+#include "Knight/Core/Combat/CombatCommon.h"
 #include "Knight/Core/Combat/HitDetectionNotifyState.h"
 #include "Knight/Core/Util/WxGamePlayUtil.h"
 
@@ -19,6 +22,8 @@ void UKfMeleeAttackComponent::OnMontageNotifyEnd(FName NotifyName, const FBranch
 
 void UKfMeleeAttackComponent::BeginPlay() {
 	Super::BeginPlay();
+
+	SetAllowCombo(true);
 
 	_traceDelegate.BindUObject(this, &UKfMeleeAttackComponent::onTraceCompleted);
 
@@ -45,15 +50,83 @@ void UKfMeleeAttackComponent::DoMeleeAttack() {
 		return;
 	}
 
+	if (!_meleeSequenceState.bAllowCombo) return;
+
 	constexpr int MAX_NORMAL_ATTACK_INDEX = 3;
 	constexpr int MIN_NORMAL_ATTACK_INDEX = 1;
-	_attackIndex = (++_attackIndex) % (MAX_NORMAL_ATTACK_INDEX + 1);
 
-	if (_attackIndex < MIN_NORMAL_ATTACK_INDEX) {
-		_attackIndex = MIN_NORMAL_ATTACK_INDEX;
+	int currentAttackIdx = _meleeSequenceState.comboSequence;
+
+	currentAttackIdx = (++currentAttackIdx) % (MAX_NORMAL_ATTACK_INDEX + 1);
+
+	if (currentAttackIdx < MIN_NORMAL_ATTACK_INDEX) {
+		currentAttackIdx = MIN_NORMAL_ATTACK_INDEX;
 	}
 
-	_animInstance->PlayMeleeMontage(_attackIndex);
+	_meleeSequenceState.comboSequence = currentAttackIdx;
+	_animInstance->PlayMeleeMontage(currentAttackIdx);
+}
+
+static bool _isDirectionRepeated(const FMeleeSequenceState& state, const EAttackInputDirection requestDirection) {
+	return state.isSequenceRunning() && state.lastAttackDirection == requestDirection;
+}
+
+void UKfMeleeAttackComponent::DoMeleeAttack_Directional(const FVector2d& movementInput) {
+	if (!_animInstance) {
+		UC_LOG_ERROR("Do Melee Attack Failed: No Anim Instance Found!")
+		return;
+	}
+
+	if (!_meleeSequenceState.bAllowCombo) return;
+	auto eDirection = CombatUtil::GetAttackInputDirection(movementInput);
+
+	if(_isDirectionRepeated(_meleeSequenceState, eDirection)) {
+		if (_debug) {
+			UC_MSG("Repeated Attack Direction %d", static_cast<int>(eDirection));
+		}
+		return;
+	}
+
+	_animInstance->PlayMeleeMontage_Directional(eDirection);
+	_meleeSequenceState.comboSequence++;
+	_meleeSequenceState.lastAttackDirection = eDirection;
+
+	if (!_debug) {
+		if (const auto e = StaticEnum<EAttackInputDirection>()) {
+			const FString eString = e->GetNameStringByValue(static_cast<int64>(eDirection));
+
+			FString directionString;
+
+			switch (eDirection) {
+				case EAttackInputDirection::Normal: directionString = "o"; break;
+				case EAttackInputDirection::Up:		directionString = "^"; break;
+				case EAttackInputDirection::Down:	directionString = "v"; break;
+				case EAttackInputDirection::Left:	directionString = "<"; break;
+				case EAttackInputDirection::Right:	directionString = ">"; break;
+			}
+
+			UC_MSG("Attack Direction %s %s" , *directionString, *eString)
+		}
+	}
+}
+
+void UKfMeleeAttackComponent::DoMeleeAttack_Heavy() {
+	if (!_meleeSequenceState.bAllowCombo) return;
+	constexpr int MIN_HEAVY_ATTACK_INDEX = 11;
+	constexpr int MAX_HEAVY_ATTACK_INDEX = 11;
+	_animInstance->PlayMeleeMontage(MIN_HEAVY_ATTACK_INDEX);
+}
+
+void UKfMeleeAttackComponent::ResetAttackSequence() {
+	int last = _meleeSequenceState.comboSequence;
+	_meleeSequenceState.comboSequence = 0;
+	_meleeSequenceState.lastAttackDirection = EAttackInputDirection::Normal;
+	SetAllowCombo(true);
+	if (_debug) UC_MSG("Reset Attack Sequence from %d to 0", last);
+}
+
+void UKfMeleeAttackComponent::SetAllowCombo(bool bAllowCombo) {
+	_meleeSequenceState.bAllowCombo = bAllowCombo;
 }
 
 FTraceHandle UKfMeleeAttackComponent::TraceSwordHits(const FVector& start, const FVector& direction, float distance, float swordRad, bool isSegment) const {
@@ -76,7 +149,7 @@ FTraceHandle UKfMeleeAttackComponent::TraceSwordHits(const FVector& start, const
 	//const bool hit = world->SweepSingleByChannel(outHitResult, start, traceEnd, swordQuat, ECollisionChannel::ECC_Pawn, sweepHitBox, traceParams);
 	const auto h = world->AsyncSweepByChannel(EAsyncTraceType::Multi, start, traceEnd, swordQuat, ECollisionChannel::ECC_Pawn, sweepHitBox, traceParams, FCollisionResponseParams::DefaultResponseParam, &_traceDelegate, 0);
 
-	if (_drawHitBox) {
+	if (_debug) {
 		const auto center = start + (direction * halfHeight);
 		const auto color = isSegment ? FColor::Blue : FColor::Yellow;
 		DrawDebugCapsule(world, center, halfHeight, swordRad, swordQuat, color, _persistentLine, 0.1f, 0, 1.f);
@@ -91,24 +164,24 @@ static FAttackReqeust CreateAttackRequest(const FHitResult& hitResult) {
 }
 
 void UKfMeleeAttackComponent::OnSwordHitResult(const FHitResult& hitResult) const {
-	const auto* world = GetWorld();
-	UParticleSystem* pPfx = _swordHitEffectSet.hitEffect_Ground.Get();
-
 	if (auto* attackable = Cast<IReactToAttack>(hitResult.GetActor())) {
 		const auto req = CreateAttackRequest(hitResult);
 		const auto result = attackable->ReactToAttack(req);
 
 		if (result.success) {
-			pPfx = _swordHitEffectSet.hitEffect_Pawn.Get();
+			const auto* world = GetWorld();
+			if (auto* pPfx = _swordHitEffectSet.hitEffect_Pawn.Get()) {
+				WxGamePlayUtil::PlayHitNormalEffect(pPfx, _swordHitEffectSet.effectSize, hitResult, world);
+			}
+
+			if (const auto root = GetOwner()->GetRootComponent()) {
+				_swordHitEffectSet.hitSoundRequest_Pawn.Play(root);
+			}
+
+			if (_debug) {
+				DrawDebugSphere(GetWorld(), hitResult.ImpactPoint, 100.f, 4, FColor::Red, _persistentLine, 1.f, 0, 1.f);
+			}
 		}
-	}
-
-	if (pPfx) {
-		WxGamePlayUtil::PlayHitNormalEffect(_swordHitEffectSet.hitEffect_Ground.Get(), _swordHitEffectSet.effectSize, hitResult, world);
-	}
-
-	if (_drawHitBox) {
-		DrawDebugSphere(GetWorld(), hitResult.ImpactPoint, 100.f, 4, FColor::Red, _persistentLine, 1.f, 0, 1.f);
 	}
 }
 
@@ -164,8 +237,8 @@ bool UKfMeleeAttackComponent::DoSwingHits(const UHitDetectionNotifyParam& param)
 			float alpha = static_cast<float>(i) / segmentCount;
 
 			// Interpolate the position and rotation
-			FVector startPos = FMath::Lerp(prev.start, current.start, alpha);
-			FVector direction = FMath::Lerp(prev.unitDirection, current.unitDirection, alpha);
+			const FVector startPos = FMath::Lerp(prev.start, current.start, alpha);
+			const FVector direction = FMath::Lerp(prev.unitDirection, current.unitDirection, alpha);
 			hit |= TrySwordHitOnce(startPos, direction, i < segmentCount - 1);
 		}
 	} else {

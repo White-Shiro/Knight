@@ -19,6 +19,7 @@ class KNIGHT_API UKfTargetComponent : public UActorComponent {
 	FVector2f _lockPitchRange = FVector2f(-60.0f, 60.0f);
 
 	TArray<FOverlapResult> _overlaps;
+	TObjectPtr<class UCameraComponent> _targetCamera;
 
 public:
 	UKfTargetComponent();
@@ -31,8 +32,9 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
 	void UpdateCamera(float dt);
-	void ScanTarget();
+	bool ScanTarget();
 	void ReleaseTarget();
+	void SetTargetCamera(UCameraComponent* targetCamera);
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE bool hasTarget() const { return _target.IsValid(); }

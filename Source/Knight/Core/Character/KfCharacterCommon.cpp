@@ -123,15 +123,23 @@ UInputAction* KfCharacterCommon::GetDefaultLockTargetAction() {
 	return Finder.Object;
 }
 
-
-UInputAction* KfCharacterCommon::GetDefaultAttackAction() {
-	static ConstructorHelpers::FObjectFinder<UInputAction> Finder = IA_FIND_PATH("IA_Attack");
+UInputAction* KfCharacterCommon::GetDefaultAttack1Action() {
+	static ConstructorHelpers::FObjectFinder<UInputAction> Finder = IA_FIND_PATH("IA_Attack_1");
 	return Finder.Object;
 }
 
+UInputAction* KfCharacterCommon::GetDefaultAttack2Action() {
+	static ConstructorHelpers::FObjectFinder<UInputAction> Finder = IA_FIND_PATH("IA_Attack_2");
+	return Finder.Object;
+}
 
 UInputAction* KfCharacterCommon::GetDefaultToggleCombatStateAction() {
 	static ConstructorHelpers::FObjectFinder<UInputAction> Finder = IA_FIND_PATH("IA_ToggleCombat");
+	return Finder.Object;
+}
+
+UInputAction* KfCharacterCommon::GetDefaultEvadeAction() {
+	static ConstructorHelpers::FObjectFinder<UInputAction> Finder = IA_FIND_PATH("IA_Evade");
 	return Finder.Object;
 }
 

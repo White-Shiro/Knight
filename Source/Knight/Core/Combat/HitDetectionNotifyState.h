@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotifyState.h"
-#include "CombatInterface.h"
+#include "CombatCommon.h"
 #include "HitDetectionNotifyState.generated.h"
 
 struct UHitDetectionNotifyParam {
@@ -18,7 +18,6 @@ class KNIGHT_API UHitDetectionNotifyState : public UAnimNotifyState {
 
 public:
 	UHitDetectionNotifyState();
-
 
 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration,
 		const FAnimNotifyEventReference& EventReference) override;
