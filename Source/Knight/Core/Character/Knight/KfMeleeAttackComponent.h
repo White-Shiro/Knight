@@ -17,7 +17,7 @@ struct FSwordHitEffectSet {
 	TObjectPtr<UParticleSystem> hitEffect_Ground = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Hit Effect")
-	FVector effectSize = FVector::One();
+	FVector effectSize = FVector::OneVector; // Jason: very minor
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound")
 	FSoundRequest hitSoundRequest_Pawn;
@@ -46,7 +46,7 @@ UCLASS(ClassGroup=(Knight), meta=(BlueprintSpawnableComponent))
 class KNIGHT_API UKfMeleeAttackComponent : public UActorComponent {
 	GENERATED_BODY()
 
-	TObjectPtr<class UKfCharacterAnimInstance> _animInstance = nullptr;
+	TObjectPtr<class UKfCharacterAnimInstance> _animInstance; // = nullptr; Jason no needed
 
 	UPROPERTY(EditAnywhere, Category = "Debug")
 	bool _debug = false;

@@ -51,12 +51,16 @@ void UKfTargetComponent::UpdateCamera(float dt) {
 	pc->SetControlRotation(FMath::RInterpTo(pc->GetControlRotation(), rot, dt, adjustedLockSpeed));
 }
 
-static ITargetable* _GetClosestTarget(const TArray<FOverlapResult>& overlaps, const FVector& loc) {
+// static function in .cpp means this function only visible in same .cpp file
+// but it's not a good idea in Unreal or any c++ project with unity build
+// since multiple .cpp files will combind together, make the function name collides
+// I do give it prefix of the class name
+static ITargetable* UKfTargetComponent_GetClosestTarget(const TArray<FOverlapResult>& overlaps, const FVector& loc) {
 	ITargetable* target = nullptr;
 	float minDist = FLT_MAX;
 	for (const auto& overlap : overlaps) {
-		if (const auto actor = overlap.GetActor()) {
-			if (const auto targetable = Cast<ITargetable>(actor)) {
+		if (const auto* actor = overlap.GetActor()) {
+			if (const auto* targetable = Cast<ITargetable>(actor)) {
 				if (const auto dist = FVector::DistSquared(loc, actor->GetActorLocation()); dist < minDist) {
 					minDist = dist;
 					target = targetable;
@@ -71,9 +75,13 @@ bool UKfTargetComponent::ScanTarget() {
 	auto* owner  = GetOwner();
 	_target = nullptr;
 	const auto loc = owner->GetActorLocation();
-	FCollisionQueryParams queryParam = {};
+	FCollisionQueryParams queryParam; // = {}; Jason no needed for c++ object with proper ctor, "={}" may use for old C struct without ctor
 	queryParam.AddIgnoredActor(owner);
-	const bool hit = GetWorld()->OverlapMultiByObjectType(_overlaps, loc, FQuat::Identity, FCollisionObjectQueryParams::AllDynamicObjects, FCollisionShape::MakeSphere(_scanRadius), queryParam);
+	const bool hit = GetWorld()->OverlapMultiByObjectType(
+											_overlaps,
+											loc, FQuat::Identity, FCollisionObjectQueryParams::AllDynamicObjects, 
+											FCollisionShape::MakeSphere(_scanRadius), 
+											queryParam);
 
 	if (!hit) {
 		UC_MSG("No Target Found");
@@ -81,11 +89,11 @@ bool UKfTargetComponent::ScanTarget() {
 		return false;
 	}
 
-	_target = _GetClosestTarget(_overlaps, loc);
+	_target = UKfTargetComponent_GetClosestTarget(_overlaps, loc);
 	const bool hasTarget = _target.IsValid();
 
 	if(hasTarget) {
-		if (const auto* ch = AKfCharacter::CastFrom(owner)) { }
+		if (const auto* ch = AKfCharacter::CastFrom(owner)) { } // Jason: what's this line used for ?
 		UC_MSG("Target Acquired");
 	}
 
@@ -97,10 +105,10 @@ void UKfTargetComponent::ReleaseTarget() {
 	_overlaps.Empty();
 	_target = nullptr;
 
-	if (const auto* ch = AKfCharacter::CastFrom(GetOwner())) {
+	if (const auto* ch = AKfCharacter::CastFrom(GetOwner())) {	// Jason: unused code ?
 	}
 
-	Deactivate();
+	Deactivate(); // Jason: I prefer SetActive(nullptr); so I don't have to maintain 2 functions
 }
 
 void UKfTargetComponent::SetTargetCamera(UCameraComponent* targetCamera) {

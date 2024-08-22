@@ -17,16 +17,18 @@ void FSoundRequest::Play(USceneComponent* requestor) const {
 	const auto world = requestor->GetWorld();
 	if (!world) return;
 
+ // Jason: I don't like to separate in this way, since it might easily create bug in the future change
 #if WITH_EDITORONLY_DATA
 	if (bPreviewIgnoreAttenuation && world && world->WorldType == EWorldType::EditorPreview) {
 		UGameplayStatics::PlaySound2D(world, Sound, VolumeMultiplier, PitchMultiplier);
-	} else
+		return; // Jason: just return here
+	}
 #endif
-	{
-		if (bFollow && requestor) {
-			UGameplayStatics::SpawnSoundAttached(Sound, requestor, AttachName, FVector(ForceInit), EAttachLocation::SnapToTarget, false, VolumeMultiplier, PitchMultiplier);
-		} else {
-			UGameplayStatics::PlaySoundAtLocation(world, Sound, requestor->GetComponentLocation(), VolumeMultiplier, PitchMultiplier);
-		}
+
+	// Jason: then this block looks more nature
+	if (bFollow && requestor) {
+		UGameplayStatics::SpawnSoundAttached(Sound, requestor, AttachName, FVector(ForceInit), EAttachLocation::SnapToTarget, false, VolumeMultiplier, PitchMultiplier);
+	} else {
+		UGameplayStatics::PlaySoundAtLocation(world, Sound, requestor->GetComponentLocation(), VolumeMultiplier, PitchMultiplier);
 	}
 }

@@ -24,7 +24,12 @@ void UKfCharacterAnimInstance::SyncWalkPlaySpeed(const FVector& worldVel, const 
 
 	const float animVelMag = localInputV.X > -0.1f ? animWalkMotionVelMag : animBackWalkMotionVelMag;
 	const float velocityMag = worldVel.Length();
-	const float playSpeed = velocityMag / (animVelMag * meshScale);
+
+	// Jason: be careful div by zero
+	float div = animVelMag * meshScale;
+	const float playSpeed = FMath::IsNearlyZero(animVelMag) ? 0 : velocityMag / (animVelMag * meshScale);
+	// Jason: but I do have MyMath::SafeDiv(a,b)
+
 	aMoveAnimPlaySpeed = velocityMag > 0 ? playSpeed : 1;
 }
 
@@ -41,6 +46,7 @@ void UKfCharacterAnimInstance::SetWalkBlendspaceDirection2D(const FVector2d& loc
 }
 
 void UKfCharacterAnimInstance::SetWalkBlendspaceDirection1D(const FVector& worldVel, const float maxSpeed) {
+	// Jason: you sure compare float by "==" or better use FMath::IsNearlyZero
 	if (worldVel == FVector::ZeroVector || maxSpeed == 0) {
 		aMoveDirection = FVector2f::ZeroVector;
 		return;

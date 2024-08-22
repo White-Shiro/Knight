@@ -49,8 +49,10 @@ struct FAttackReqeust {
 struct FHurtHistory {
 	const float HURT_INTERVEL = 0.1f;
 	float lastHurtTime = 0.0f;
-	FORCEINLINE void SetHurtTime(const double time) { lastHurtTime = time; }
-	FORCEINLINE bool IsHurtable(const double currentTime) const { return (currentTime - lastHurtTime) > HURT_INTERVEL; }
+
+	// Jason: "const double" is unnecessary 
+	FORCEINLINE void SetHurtTime(double time) { lastHurtTime = time; }
+	FORCEINLINE bool IsHurtable(double currentTime) const { return (currentTime - lastHurtTime) > HURT_INTERVEL; }
 };
 
 struct FAttackResult {
@@ -58,7 +60,7 @@ struct FAttackResult {
 
 	}
 
-	bool success;
+	bool success = false; // Jason: even I know ctor will give it value, but I still give it a default in-case change in the future
 };
 
 UINTERFACE()

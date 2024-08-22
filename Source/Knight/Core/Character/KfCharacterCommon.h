@@ -18,7 +18,11 @@ struct SCameraRotationState {
 
 class KfCharacterCommon {
 public:
-	static void HandleMoveInput_CameraBase      (const FInputActionValue& Value, ACharacter* const character);
+	// Jason: "ACharacter* const"  <-- this means the pointer is const, but the ACharacter still mutable
+	// what's the point to make pointer unchangeable ?
+	// or you want "ACharacter const *" ?
+	// if so, "const ACharacter*" also work in old-style
+	static void HandleMoveInput_CameraBase      (const FInputActionValue& Value, ACharacter const *  character);
 	static void HandleMoveInput      (const FInputActionValue& Value, ACharacter* const character);
 	static void HandleTurnInput		 (const FInputActionValue& Value, ACharacter* const character, SCameraRotationState& cameraRotationState);
 	static void HandleLookInput      (const FInputActionValue& Value, ACharacter* const character, SCameraRotationState& cameraRotationState, float CameraLookSpeed);
@@ -29,6 +33,16 @@ public:
 	//static void HandleStopSprintInput(const FInputActionValue& Value, ACharacter* const character);
 	static void UpdateCameraRotation (float dt, ACharacter* const character, SCameraRotationState& cameraRotationState, float interpolateSpeed);
 
+	// Jason: I would do it in a struct to return all at once
+	// struct FDefaultActions {
+	//		FDefaultActions() {
+	//			Move = xxxx
+	//		}
+	//		UIInputAction* Move = nullptr
+	//		UIInputAction* Look = nullptr
+	//		UIInputAction* Zoom = nullptr
+	// };
+	// static const FDefaultAction* GetDefaultActions() { static FDefaultActions s; return &s; } // move to .cpp
 	static UInputAction* GetDefaultMoveAction();
 	static UInputAction* GetDefaultLookAction();
 	static UInputAction* GetDefaultZoomAction();
@@ -39,5 +53,6 @@ public:
 	static UInputAction* GetDefaultAttack2Action();
 	static UInputAction* GetDefaultToggleCombatStateAction();
 	static UInputAction* GetDefaultEvadeAction();
-	static FName HitBoxCollisionPresetName();
+
+	static FName HitBoxCollisionPresetName;
 };

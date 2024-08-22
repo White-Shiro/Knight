@@ -11,6 +11,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* DefaultMappingContext = nullptr;
 
+	// Jason: please add UPROPERTY() for any TObjectPtr<> or UObject*
+	// GC will help you set null, if you don't want GC, you can try TWeakObjectPtr<> instead
+	// UPROPERTY()
 	TObjectPtr<class AKfCharacter> CurrentKnightFrame = nullptr;
 
 public:

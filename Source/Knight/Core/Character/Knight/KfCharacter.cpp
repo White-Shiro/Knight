@@ -54,6 +54,9 @@ AKfCharacter::AKfCharacter(FObjectInitializer const& initializer) {
 
 	CameraFreeLookSpeed = 1.f;
 
+	// Jason: I do have helper for this, so don't have to give it a name by default
+	// MyCDO::CreateComponent(this, FollowCamera);
+	// https://github.com/Jasonchan35/Blacktown_ThirdPersonTemplate/blob/main/Source/ThirdPerson/MyLib/MyCDO.h
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(UCameraComponent::StaticClass()->GetFName(), false);
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	// Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
@@ -94,6 +97,10 @@ void AKfCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	if (!enInput) return;
 
 	const auto& ia = _inputActionSet;
+
+	// Jason: I use macro for belows, but it just my personal way only
+	// #define MY_BIND_INPUT_ACTION(Action, Event)
+	// https://github.com/Jasonchan35/Blacktown_ThirdPersonTemplate/blob/main/Source/ThirdPerson/MyPlayerController.cpp
 
 	if (ia.MoveAction) {
 		enInput->BindAction(ia.MoveAction, ETriggerEvent::Triggered, this, &This::OnMoveInput);

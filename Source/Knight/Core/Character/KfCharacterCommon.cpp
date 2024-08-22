@@ -23,6 +23,7 @@ static void _AddMovementFromRotation(ACharacter* const character, const FVector2
 }
 
 void KfCharacterCommon::HandleMoveInput(const FInputActionValue& Value, ACharacter* const character) {
+	if (!character) return; // Jason: more safety
 	if (!character->Controller) return;
 
 	const FVector2D movementVector = Value.Get<FVector2D>();
@@ -31,7 +32,10 @@ void KfCharacterCommon::HandleMoveInput(const FInputActionValue& Value, ACharact
 }
 
 void KfCharacterCommon::HandleMoveInput_CameraBase(const FInputActionValue& Value, ACharacter* const character) {
-	const auto ctrl = character->GetInstigatorController();
+	// Jason: always try to use "auto*" or "auto&" to avoid object copy
+	// for example, if someone changed GetInstigatorController() to return "object&", then you code will copy here
+	// using auto* will stop compile in that case
+	const auto* ctrl = character->GetInstigatorController();
 	if (!ctrl) return;
 
 	const FVector2D movementVector = Value.Get<FVector2D>();
@@ -46,10 +50,12 @@ void KfCharacterCommon::HandleTurnInput(const FInputActionValue& Value, ACharact
 	const float TurnAxisScalar = Value.Get<float>();
 
 	const auto* move = character->GetCharacterMovement();
+	if (!move) return; // Jason: more safety
+
 	const auto rotRate = move->RotationRate;
 	auto currentRot = character->GetActorRotation();
 	const float deltaTime = character->GetWorld()->DeltaTimeSeconds;
-	const auto deltaYaw = TurnAxisScalar * (rotRate.Yaw) * deltaTime;
+	const auto deltaYaw = TurnAxisScalar * rotRate.Yaw * deltaTime;
 	currentRot.Yaw += deltaYaw;
 	character->SetActorRotation(currentRot);
 
@@ -58,7 +64,7 @@ void KfCharacterCommon::HandleTurnInput(const FInputActionValue& Value, ACharact
 
 void KfCharacterCommon::HandleLookInput(const FInputActionValue& Value, ACharacter* const character,
 	SCameraRotationState& cameraRotationState, float CameraLookSpeed) {
-	const auto* pc = (character->GetInstigatorController());
+	const auto* pc = character->GetInstigatorController();
 	if (!pc) return;
 
 	const float scaler = CameraLookSpeed;
@@ -81,7 +87,7 @@ void KfCharacterCommon::HandleZoomInput(const FInputActionValue& Value, ACharact
 	}
 
 	const float zoomValue = Value.Get<float>();
-	const float newLength = cameraBoom->TargetArmLength- zoomValue * zoomSpeed;
+	const float newLength = cameraBoom->TargetArmLength - zoomValue * zoomSpeed;
 	cameraBoom->TargetArmLength = FMath::Clamp(newLength, clampRange.X, clampRange.Y);
 }
 
@@ -143,7 +149,5 @@ UInputAction* KfCharacterCommon::GetDefaultEvadeAction() {
 	return Finder.Object;
 }
 
-FName KfCharacterCommon::HitBoxCollisionPresetName() {
-	static FName presetName = TEXT("HitBox");
-	return presetName;
-}
+FName KfCharacterCommon::HitBoxCollisionPresetName(TEXT("HitBox"));
+	

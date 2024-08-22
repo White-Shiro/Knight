@@ -13,7 +13,7 @@ struct FAttackAnimationSet {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attack Motion")
-	UAnimMontage* attackMontage_NA_1 = nullptr;
+	TObjectPtr<UAnimMontage>* attackMontage_NA_1; // Jason: minor
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attack Motion")
 	UAnimMontage* attackMontage_NA_2 = nullptr;
@@ -94,7 +94,8 @@ private:
 
 	static constexpr float WALK_BLENDSPACE_AXIS_SCALE = 100.f;
 
-	TObjectPtr<class AKfCharacter> _knightCh = nullptr;
+	// Jason: please add UPROPERTY() or use TWeakObjectPtr<>
+	TObjectPtr<class AKfCharacter> _knightCh; // = nullptr;
 
 	FVector2D _lastMoveInput;
 
@@ -102,8 +103,19 @@ private:
 		Forward,
 		Backward,
 		Left,
-		Right
+		Right,
+		_END
 	};
+
+	constexpr int EWalkDirectionCount = static_cast<int>(EWalkDirection::_END);
+
+	// using a Map for 4 entries sounds overkill
+	// just using an array to lookup is the fastest way
+	// TObjectPtr<UAnimSequence> _walkBlendSpaces[EWalkDirectionCount];
+	// UAnimSequence* GetWalkBlendSpace(EWalkDirection e) {
+	//		int i = static_cast<int>(e);
+	//		return (i >= 0 && i < _walkBlendSpaces) ? _walkBlendSpaces[i] : nullptr;
+	// }
 
 	TMap<EWalkDirection, TObjectPtr<UAnimSequence>> _walkBlendSpaceMap;
 	static EWalkDirection GetWalkDirection(const FVector2d& inputV);

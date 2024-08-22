@@ -9,7 +9,7 @@ struct UHitDetectionNotifyParam {
 	USkeletalMeshComponent* meshComp = nullptr;
 	UAnimSequenceBase* animation = nullptr;
 	float totalDuration = 0;
-	int sequenceId;
+	int sequenceId; // Jason: give it a default value ?
 };
 
 UCLASS()
@@ -28,6 +28,6 @@ public:
 
 protected:
 
-	TWeakInterfacePtr<IReactToAnimHitDectectNotifyState> _target = nullptr;
+	TWeakInterfacePtr<IReactToAnimHitDectectNotifyState> _target; // = nullptr; Jason: it's null aleady
 	int _sequenceId = -1;
 };

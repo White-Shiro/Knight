@@ -19,9 +19,13 @@ class KNIGHT_API UComboWindowNotifyState : public UAnimNotifyState {
 	UPROPERTY(EditAnywhere) bool isEndAllowed;
 	UPROPERTY(EditAnywhere) bool resetComboSequenceOnEnd;
 
-	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration,
-	const FAnimNotifyEventReference& EventReference) override;
+	// Jason: I will do code format this way, but it just my personal preference 
+	virtual void NotifyBegin(	USkeletalMeshComponent* MeshComp,
+								UAnimSequenceBase* Animation,
+								float TotalDuration,
+								const FAnimNotifyEventReference& EventReference) override;
 
-	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
-	const FAnimNotifyEventReference& EventReference) override;
+	virtual void NotifyEnd(	USkeletalMeshComponent* MeshComp,
+							UAnimSequenceBase* Animation,
+							const FAnimNotifyEventReference& EventReference) override;
 };

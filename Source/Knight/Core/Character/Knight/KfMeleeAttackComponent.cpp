@@ -67,6 +67,7 @@ void UKfMeleeAttackComponent::DoMeleeAttack() {
 	_animInstance->PlayMeleeMontage(currentAttackIdx);
 }
 
+// Jason: give it better name, to avoid function name collision
 static bool _isDirectionRepeated(const FMeleeSequenceState& state, const EAttackInputDirection requestDirection) {
 	return state.isSequenceRunning() && state.lastAttackDirection == requestDirection;
 }
@@ -91,7 +92,7 @@ void UKfMeleeAttackComponent::DoMeleeAttack_Directional(const FVector2d& movemen
 	_meleeSequenceState.comboSequence++;
 	_meleeSequenceState.lastAttackDirection = eDirection;
 
-	if (!_debug) {
+	if (!_debug) { // Jason: Log only not debug ?
 		if (const auto e = StaticEnum<EAttackInputDirection>()) {
 			const FString eString = e->GetNameStringByValue(static_cast<int64>(eDirection));
 
@@ -113,7 +114,7 @@ void UKfMeleeAttackComponent::DoMeleeAttack_Directional(const FVector2d& movemen
 void UKfMeleeAttackComponent::DoMeleeAttack_Heavy() {
 	if (!_meleeSequenceState.bAllowCombo) return;
 	constexpr int MIN_HEAVY_ATTACK_INDEX = 11;
-	constexpr int MAX_HEAVY_ATTACK_INDEX = 11;
+	constexpr int MAX_HEAVY_ATTACK_INDEX = 11; // Jason not in use ?
 	_animInstance->PlayMeleeMontage(MIN_HEAVY_ATTACK_INDEX);
 }
 
@@ -211,7 +212,7 @@ bool UKfMeleeAttackComponent::DoSwingHits(const UHitDetectionNotifyParam& param)
 	const auto t = param.meshComp->GetSocketTransform(WEAPON_SOCKET_RIGHT);
 
 	const auto targetStart = t.GetLocation();
-	const auto targetSwordDir = t.TransformVectorNoScale(-FVector::UpVector);
+	const auto targetSwordDir = t.TransformVectorNoScale(FVector::DownVector); // Jason: minor
 
 	const FTraceDirectionInfo current = {
 		.start = targetStart,
@@ -228,7 +229,7 @@ bool UKfMeleeAttackComponent::DoSwingHits(const UHitDetectionNotifyParam& param)
 
 		constexpr int MAX_SEGMENT_COUNT = 12;
 		const float hitboxDiameter = _hitBoxRadius * 2;
-		int segmentCount = FMath::CeilToInt(archLength / hitboxDiameter);
+		int segmentCount = FMath::CeilToInt(archLength / hitboxDiameter); // Jason: is it possible to div by zero ?
 		segmentCount = FMath::Clamp(segmentCount, 1, MAX_SEGMENT_COUNT);
 
 		// For each segment
@@ -278,4 +279,4 @@ void UKfMeleeAttackComponent::PostEditChangeProperty(FPropertyChangedEvent& Prop
 	);
 }
 
-#endif
+#endif // WITH_EDITOR
