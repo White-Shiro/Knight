@@ -6,7 +6,7 @@
 #include "Knight/Core/Character/KfCharacterCommon.h"
 #include "Knight/Core/Combat/CombatCommon.h"
 #include "Knight/Core/Combat/HitDetectionNotifyState.h"
-#include "Knight/Core/Util/WxGamePlayUtil.h"
+#include "Knight/Core/Util/KfGamePlayUtil.h"
 
 UKfMeleeAttackComponent::UKfMeleeAttackComponent() {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -91,7 +91,7 @@ void UKfMeleeAttackComponent::DoMeleeAttack_Directional(const FVector2d& movemen
 	_meleeSequenceState.comboSequence++;
 	_meleeSequenceState.lastAttackDirection = eDirection;
 
-	if (!_debug) {
+	if (_debug) {
 		if (const auto e = StaticEnum<EAttackInputDirection>()) {
 			const FString eString = e->GetNameStringByValue(static_cast<int64>(eDirection));
 
@@ -113,7 +113,7 @@ void UKfMeleeAttackComponent::DoMeleeAttack_Directional(const FVector2d& movemen
 void UKfMeleeAttackComponent::DoMeleeAttack_Heavy() {
 	if (!_meleeSequenceState.bAllowCombo) return;
 	constexpr int MIN_HEAVY_ATTACK_INDEX = 11;
-	constexpr int MAX_HEAVY_ATTACK_INDEX = 11;
+	// constexpr int MAX_HEAVY_ATTACK_INDEX = 11;
 	_animInstance->PlayMeleeMontage(MIN_HEAVY_ATTACK_INDEX);
 }
 
@@ -164,32 +164,32 @@ static FAttackReqeust CreateAttackRequest(const FHitResult& hitResult) {
 }
 
 void UKfMeleeAttackComponent::OnSwordHitResult(const FHitResult& hitResult) const {
-	if (auto* attackable = Cast<IReactToAttack>(hitResult.GetActor())) {
-		const auto req = CreateAttackRequest(hitResult);
-		const auto result = attackable->ReactToAttack(req);
+	auto* attackable = Cast<IReactToAttack>(hitResult.GetActor());
+	if (!attackable) return;
 
-		if (result.success) {
-			const auto* world = GetWorld();
-			if (auto* pPfx = _swordHitEffectSet.hitEffect_Pawn.Get()) {
-				WxGamePlayUtil::PlayHitNormalEffect(pPfx, _swordHitEffectSet.effectSize, hitResult, world);
-			}
+	const auto req = CreateAttackRequest(hitResult);
+	const auto result = attackable->ReactToAttack(req);
 
-			if (const auto root = GetOwner()->GetRootComponent()) {
-				_swordHitEffectSet.hitSoundRequest_Pawn.Play(root);
-			}
+	if (result.success) {
+		const auto* world = GetWorld();
+		if (auto* pPfx = _swordHitEffectSet.hitEffect_Pawn.Get()) {
+			KfGamePlayUtil::PlayHitNormalEffect(pPfx, _swordHitEffectSet.effectSize, hitResult, world);
+		}
 
-			if (_debug) {
-				DrawDebugSphere(GetWorld(), hitResult.ImpactPoint, 100.f, 4, FColor::Red, _persistentLine, 1.f, 0, 1.f);
-			}
+		if (const auto root = GetOwner()->GetRootComponent()) {
+			_swordHitEffectSet.hitSoundRequest_Pawn.Play(root);
+		}
+
+		if (_debug) {
+			DrawDebugSphere(GetWorld(), hitResult.ImpactPoint, 100.f, 4, FColor::Red, _persistentLine, 1.f, 0, 1.f);
 		}
 	}
 }
 
 void UKfMeleeAttackComponent::onTraceCompleted(const FTraceHandle& handle, FTraceDatum& data) {
-	if (data.OutHits.Num() > 0) {
-		for (const auto& hit : data.OutHits) {
-			OnSwordHitResult(hit);
-		}
+	if (data.OutHits.Num() <= 0) return;
+	for (const auto& hit : data.OutHits) {
+		OnSwordHitResult(hit);
 	}
 }
 

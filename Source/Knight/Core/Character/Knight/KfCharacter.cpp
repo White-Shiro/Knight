@@ -26,7 +26,7 @@ FKfCharacterInputActionSet::FKfCharacterInputActionSet() {
 AKfCharacter::AKfCharacter(FObjectInitializer const& initializer) {
 	PrimaryActorTick.bCanEverTick = true;
 
-	AutoPossessAI = EAutoPossessAI::Disabled;
+	AutoPossessAI = EAutoPossessAI::PlacedInWorld;
 	AutoPossessPlayer = EAutoReceiveInput::Disabled;
 
 	GetArrowComponent()->SetArrowSize(5.f);
@@ -36,18 +36,14 @@ AKfCharacter::AKfCharacter(FObjectInitializer const& initializer) {
 	static FName msCollisionPresetName(TEXT("Vehicle"));
 	capsule->SetCollisionProfileName(msCollisionPresetName);
 
-	bUseControllerRotationYaw = true;
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationRoll = false;
-
-	auto* charMove = GetCharacterMovement();
-	charMove->bOrientRotationToMovement = true;
+	_characterMovement = GetCharacterMovement();
+	_characterMovement->bOrientRotationToMovement = true;
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(USpringArmComponent::StaticClass()->GetFName(), false);
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 3000.0f;
 	CameraBoom->SocketOffset = FVector(0.f, 0.f, 800.f);
-	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->bUsePawnControlRotation = false;
 	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagMaxDistance = 1000.f;
 	CameraBoom->CameraLagSpeed = 10.f;
@@ -59,6 +55,9 @@ AKfCharacter::AKfCharacter(FObjectInitializer const& initializer) {
 	// Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	bUseControllerRotationYaw = true;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
 
 	MeleeAttackComponent = CreateDefaultSubobject<UKfMeleeAttackComponent>(UKfMeleeAttackComponent::StaticClass()->GetFName(), false);
 	_targetComponent = CreateDefaultSubobject<UKfTargetComponent>(UKfTargetComponent::StaticClass()->GetFName(), false);
@@ -134,7 +133,7 @@ void AKfCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 }
 
-void AKfCharacter::AddMovementInput(FVector WorldDirection, float ScaleValue, bool bForce) {
+void AKfCharacter::AddMovementInput(const FVector WorldDirection, float ScaleValue, bool bForce) {
 	Super::AddMovementInput(WorldDirection, ScaleValue, bForce);
 }
 
@@ -155,15 +154,17 @@ FAttackResult AKfCharacter::ReactToAttack(const FAttackReqeust& req) {
 	return FAttackResult(true);
 }
 
-void AKfCharacter::ReactToAnimHitDetection(float frameDt, const UHitDetectionNotifyParam& payload) {
-	if (MeleeAttackComponent) MeleeAttackComponent->HandleAnimHitDetection(frameDt, payload);
+void AKfCharacter::ReactToAnimHitDetection(float frameDeltaTime, const UHitDetectionNotifyParam& payload) {
+	if (MeleeAttackComponent) MeleeAttackComponent->HandleAnimHitDetection(frameDeltaTime, payload);
 }
 
 void AKfCharacter::ReactToComboWindowNotifyState(bool isBegin, bool isEnd, bool isComboAllowed) {
+	SetCharacterOrientToCamera(isComboAllowed);
 	if (MeleeAttackComponent) MeleeAttackComponent->SetAllowCombo(isComboAllowed);
 }
 
 void AKfCharacter::ReactToComboWindowNotifyState_ResetComboSequence() {
+	SetCharacterOrientToCamera(true);
 	if (MeleeAttackComponent) MeleeAttackComponent->ResetAttackSequence();
 }
 
@@ -190,23 +191,13 @@ void AKfCharacter::OnEvadeInput(const FInputActionValue& Value) {
 	MeleeAttackComponent->ResetAttackSequence();
 }
 
-void AKfCharacter::OnStopJumpInput(const FInputActionValue& Value) {
-}
+void AKfCharacter::OnStopJumpInput(const FInputActionValue& Value) {}
 
-void AKfCharacter::OnSprintInput(const FInputActionValue& Value) {
-}
+void AKfCharacter::OnSprintInput(const FInputActionValue& Value) {}
 
-void AKfCharacter::OnStopSprintInput(const FInputActionValue& Value) {
-}
+void AKfCharacter::OnStopSprintInput(const FInputActionValue& Value) {}
 
-void AKfCharacter::OnToggleCombatStateInput(const FInputActionValue& Value) {
-
-}
-
-static void _UpdateSpringArm(USpringArmComponent* springArm, const FSpringArmState& state) {
-	springArm->SocketOffset = state.socketOffset;
-	springArm->TargetArmLength = state.targetArmLength;
-}
+void AKfCharacter::OnToggleCombatStateInput(const FInputActionValue& Value) {}
 
 void AKfCharacter::OnLockTargetInput(const FInputActionValue& Value) {
 	if (!_targetComponent) return;
@@ -235,6 +226,12 @@ void AKfCharacter::OnUpdateCamera(float deltaTime) {
 
 void AKfCharacter::SetCameraBoomState(const FSpringArmState& state) {
 	_targetCameraBoomState = state;
+}
+
+void AKfCharacter::SetCharacterOrientToCamera(bool shouldOrient) {
+	bUseControllerRotationYaw = shouldOrient;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
 }
 
 void AKfCharacter::OnAttackInput() {

@@ -1,13 +1,13 @@
 ﻿#include "KfPlayerController.h"
 #include "InputMappingContext.h"
 #include "EnhancedInputSubsystems.h"
-#include "Blueprint/UserWidget.h"
 #include "Knight/Core/Common.h"
 #include "Knight/Core/Character/Knight/KfCharacter.h"
 #include "Knight/Core/Util/ObjectFinder.h"
 
 AKfPlayerController::AKfPlayerController() {
-	DefaultMappingContext = ObjectFinder::LoadAsset<UInputMappingContext>(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/Core/Config/Input/IMC_KnightGame.IMC_KnightGame'"));
+	static ConstructorHelpers::FObjectFinder<UInputMappingContext> Finder = TEXT("/Script/EnhancedInput.InputMappingContext'/Game/Core/Config/Input/IMC_KnightGame.IMC_KnightGame'");
+	DefaultMappingContext = Finder.Object;
 }
 
 static void _InitInputContext(const UInputMappingContext* ctx, const ULocalPlayer* lp) {
@@ -33,8 +33,8 @@ void AKfPlayerController::BeginPlay() {
 void AKfPlayerController::OnPossess(APawn* InPawn) {
 	Super::OnPossess(InPawn);
 
-	CurrentKnightFrame = Cast<AKfCharacter>(InPawn);
-	if (CurrentKnightFrame) {
+	_currentKnightFrame = Cast<AKfCharacter>(InPawn);
+	if (_currentKnightFrame.Get()) {
 		UC_LOG_MSG("Pilot Valid");
 	} else {
 		UC_LOG_ERROR_MSG("Who is this?");

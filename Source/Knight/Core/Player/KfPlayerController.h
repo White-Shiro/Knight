@@ -9,9 +9,9 @@ class KNIGHT_API AKfPlayerController : public APlayerController {
 private:
 	GENERATED_BODY()
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputMappingContext* DefaultMappingContext = nullptr;
+	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
 
-	TObjectPtr<class AKfCharacter> CurrentKnightFrame = nullptr;
+	TWeakObjectPtr<class AKfCharacter> _currentKnightFrame;
 
 public:
 	AKfPlayerController();

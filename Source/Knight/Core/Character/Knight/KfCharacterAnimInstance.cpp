@@ -154,10 +154,10 @@ float UKfCharacterAnimInstance::PlayMeleeMontage_Directional(const EAttackInputD
 }
 
 void UKfCharacterAnimInstance::PlayHurtMontage() {
-	auto mtg = attackAnimationSet.hurtMontage;
+	auto* mtg = attackAnimationSet.hurtMontage;
 	if (!mtg) return;
 
-	Montage_Play(mtg, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
+	Montage_Play(mtg);
 
 	if (FMath::RandBool()) {
 		static FName HURT_BIG_SECTION_NAME(TEXT("Big"));

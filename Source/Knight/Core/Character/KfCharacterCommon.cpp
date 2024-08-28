@@ -7,7 +7,7 @@
 
 #define IA_FIND_PATH(AssetName) TEXT("/Script/EnhancedInput.InputAction'/Game/Core/Config/Input/" AssetName "." AssetName "'");
 
-static void _AddMovementFromRotation(ACharacter* const character, const FVector2D& movementInput, const FRotator& rotation) {
+static void _AddMovementFromRotation(ACharacter* character, const FVector2D& movementInput, const FRotator& rotation) {
 	const FRotator yawRotation(0, rotation.Yaw, 0);
 	const FQuat rotationQuat(yawRotation);
 
@@ -22,7 +22,8 @@ static void _AddMovementFromRotation(ACharacter* const character, const FVector2
 	character->AddMovementInput(worldDelta);
 }
 
-void KfCharacterCommon::HandleMoveInput(const FInputActionValue& Value, ACharacter* const character) {
+void KfCharacterCommon::HandleMoveInput(const FInputActionValue& Value, ACharacter* character) {
+	if (!character) return;
 	if (!character->Controller) return;
 
 	const FVector2D movementVector = Value.Get<FVector2D>();
@@ -30,7 +31,8 @@ void KfCharacterCommon::HandleMoveInput(const FInputActionValue& Value, ACharact
 	_AddMovementFromRotation(character, movementVector, rotation);
 }
 
-void KfCharacterCommon::HandleMoveInput_CameraBase(const FInputActionValue& Value, ACharacter* const character) {
+void KfCharacterCommon::HandleMoveInput_CameraBase(const FInputActionValue& Value, ACharacter* character) {\
+	if (!character) return;
 	const auto ctrl = character->GetInstigatorController();
 	if (!ctrl) return;
 
@@ -39,8 +41,9 @@ void KfCharacterCommon::HandleMoveInput_CameraBase(const FInputActionValue& Valu
 	_AddMovementFromRotation(character, movementVector, rotation);
 }
 
-void KfCharacterCommon::HandleTurnInput(const FInputActionValue& Value, ACharacter* const character,
+void KfCharacterCommon::HandleTurnInput(const FInputActionValue& Value, ACharacter* character,
                                         SCameraRotationState& cameraRotationState) {
+	if (!character) return;
 	if(!character->Controller) return;
 
 	const float TurnAxisScalar = Value.Get<float>();
@@ -56,8 +59,9 @@ void KfCharacterCommon::HandleTurnInput(const FInputActionValue& Value, ACharact
 	cameraRotationState.targetFacingRotation.Yaw += deltaYaw;
 }
 
-void KfCharacterCommon::HandleLookInput(const FInputActionValue& Value, ACharacter* const character,
+void KfCharacterCommon::HandleLookInput(const FInputActionValue& Value, ACharacter* character,
 	SCameraRotationState& cameraRotationState, float CameraLookSpeed) {
+	if (!character) return;
 	const auto* pc = (character->GetInstigatorController());
 	if (!pc) return;
 
@@ -73,8 +77,8 @@ void KfCharacterCommon::HandleLookInput(const FInputActionValue& Value, ACharact
 	character->AddControllerPitchInput(yValue * scaler);
 }
 
-void KfCharacterCommon::HandleZoomInput(const FInputActionValue& Value, ACharacter* const character,
-	USpringArmComponent* const cameraBoom, float zoomSpeed, const FVector2f& clampRange) {
+void KfCharacterCommon::HandleZoomInput(const FInputActionValue& Value, ACharacter* character,
+	USpringArmComponent* cameraBoom, float zoomSpeed, const FVector2f& clampRange) {
 	if(!cameraBoom) {
 		UC_LOG_ERROR_MSG("cameraBoom is nullptr");
 		return;
@@ -85,11 +89,11 @@ void KfCharacterCommon::HandleZoomInput(const FInputActionValue& Value, ACharact
 	cameraBoom->TargetArmLength = FMath::Clamp(newLength, clampRange.X, clampRange.Y);
 }
 
-void KfCharacterCommon::UpdateCameraRotation(float dt, ACharacter* const character, SCameraRotationState& cameraRotationState,
+void KfCharacterCommon::UpdateCameraRotation(float deltaTime, const ACharacter* character, SCameraRotationState& cameraRotationState,
 	float interpolateSpeed) {
 
 	cameraRotationState.currentFacing =
-		FMath::RInterpTo(cameraRotationState.currentFacing, cameraRotationState.targetFacingRotation, dt, interpolateSpeed);
+		FMath::RInterpTo(cameraRotationState.currentFacing, cameraRotationState.targetFacingRotation, deltaTime, interpolateSpeed);
 
 	const FRotator finalRot(cameraRotationState.currentFacing + cameraRotationState.lookOffsetRotation);
 
@@ -143,7 +147,4 @@ UInputAction* KfCharacterCommon::GetDefaultEvadeAction() {
 	return Finder.Object;
 }
 
-FName KfCharacterCommon::HitBoxCollisionPresetName() {
-	static FName presetName = TEXT("HitBox");
-	return presetName;
-}
+FName KfCharacterCommon::HitBoxCollisionPresetName(TEXT("HitBox"));

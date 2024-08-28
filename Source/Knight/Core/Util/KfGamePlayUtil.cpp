@@ -1,7 +1,7 @@
-﻿#include "WxGamePlayUtil.h"
+﻿#include "KfGamePlayUtil.h"
 #include "Kismet/GameplayStatics.h"
 
-void WxGamePlayUtil::PlayHitNormalEffect(UParticleSystem* pPfx, const FVector& size, const FHitResult& hitResult,
+void KfGamePlayUtil::PlayHitNormalEffect(UParticleSystem* pPfx, const FVector& size, const FHitResult& hitResult,
                                          const UObject* ctxObject) {
 	if (!pPfx) return;
 	const auto loc = hitResult.ImpactPoint;

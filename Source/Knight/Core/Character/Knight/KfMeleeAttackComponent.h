@@ -46,6 +46,7 @@ UCLASS(ClassGroup=(Knight), meta=(BlueprintSpawnableComponent))
 class KNIGHT_API UKfMeleeAttackComponent : public UActorComponent {
 	GENERATED_BODY()
 
+	UPROPERTY()
 	TObjectPtr<class UKfCharacterAnimInstance> _animInstance = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Debug")
@@ -106,6 +107,8 @@ public:
 
 	void ResetAttackSequence();
 	void SetAllowCombo(bool bAllowCombo);
+
+	FMeleeSequenceState GetMeleeSequenceState() const { return _meleeSequenceState; }
 
 #if WITH_EDITOR
 

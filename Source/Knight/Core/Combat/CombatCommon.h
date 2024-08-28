@@ -43,7 +43,7 @@ namespace CombatUtil {
 }
 
 struct FAttackReqeust {
-	float damage;
+	float damage = 0;
 };
 
 struct FHurtHistory {
@@ -58,7 +58,7 @@ struct FAttackResult {
 
 	}
 
-	bool success;
+	bool success = false;
 };
 
 UINTERFACE()

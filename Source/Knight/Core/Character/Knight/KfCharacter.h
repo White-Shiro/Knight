@@ -92,7 +92,12 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	FSpringArmState _thridPersonCameraBoomState;
 
-	TObjectPtr<class UKfCharacterAnimInstance> _animInstance = nullptr;
+	UPROPERTY()
+	TObjectPtr<class UKfCharacterAnimInstance> _animInstance;
+
+	UPROPERTY()
+	TObjectPtr<class UCharacterMovementComponent> _characterMovement;
+
 	SCameraRotationState _cameraRotationState;
 	FVector2d _lastMoveInput;
 	FSpringArmState _targetCameraBoomState;
@@ -112,7 +117,7 @@ public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 
 	virtual FAttackResult ReactToAttack(const FAttackReqeust& req) override;
-	virtual void ReactToAnimHitDetection(float frameDt, const UHitDetectionNotifyParam& payload) override;
+	virtual void ReactToAnimHitDetection(float frameDeltaTime, const UHitDetectionNotifyParam& payload) override;
 	virtual void ReactToComboWindowNotifyState(const bool isBegin, const bool isEnd, const bool isComboAllowed) override;
 	virtual void ReactToComboWindowNotifyState_ResetComboSequence() override;
 
@@ -133,6 +138,7 @@ protected:
 	void ConsumeMovementInput();
 	void OnUpdateCamera(float deltaTime);
 	void SetCameraBoomState(const FSpringArmState& state);
+	void SetCharacterOrientToCamera(bool shouldOrient);
 
 public:
 	FORCEINLINE static AKfCharacter* CastFrom(AActor* actor) { return Cast<AKfCharacter>(actor); }

@@ -9,7 +9,7 @@ struct UHitDetectionNotifyParam {
 	USkeletalMeshComponent* meshComp = nullptr;
 	UAnimSequenceBase* animation = nullptr;
 	float totalDuration = 0;
-	int sequenceId;
+	int sequenceId = -1;
 };
 
 UCLASS()
