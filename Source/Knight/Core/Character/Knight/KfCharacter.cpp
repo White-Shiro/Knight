@@ -37,27 +37,33 @@ AKfCharacter::AKfCharacter(FObjectInitializer const& initializer) {
 	capsule->SetCollisionProfileName(msCollisionPresetName);
 
 	_characterMovement = GetCharacterMovement();
-	_characterMovement->bOrientRotationToMovement = true;
+
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(USpringArmComponent::StaticClass()->GetFName(), false);
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 3000.0f;
 	CameraBoom->SocketOffset = FVector(0.f, 0.f, 800.f);
-	CameraBoom->bUsePawnControlRotation = false;
+
 	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagMaxDistance = 1000.f;
 	CameraBoom->CameraLagSpeed = 10.f;
-
 	CameraFreeLookSpeed = 1.f;
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(UCameraComponent::StaticClass()->GetFName(), false);
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	// Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	bUseControllerRotationYaw = true;
+	// Rotate the arm instead of the camera
+	CameraBoom->bUsePawnControlRotation = true;
+	FollowCamera->bUsePawnControlRotation = false;
+
+	// Prevent character from instanly rotating to controller rotation.
+	bUseControllerRotationYaw = false;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
+
+	_characterMovement->bOrientRotationToMovement = false;
+	_characterMovement->bUseControllerDesiredRotation = true; // will slowly rotate character to desired rotation, using RotationRate
+	_characterMovement->RotationRate = FRotator(0.0f, 225.0f, 0.0f);
 
 	MeleeAttackComponent = CreateDefaultSubobject<UKfMeleeAttackComponent>(UKfMeleeAttackComponent::StaticClass()->GetFName(), false);
 	_targetComponent = CreateDefaultSubobject<UKfTargetComponent>(UKfTargetComponent::StaticClass()->GetFName(), false);
@@ -159,12 +165,12 @@ void AKfCharacter::ReactToAnimHitDetection(float frameDeltaTime, const UHitDetec
 }
 
 void AKfCharacter::ReactToComboWindowNotifyState(bool isBegin, bool isEnd, bool isComboAllowed) {
-	SetCharacterOrientToCamera(isComboAllowed);
+	//SetCharacterOrientToCamera(isComboAllowed);
 	if (MeleeAttackComponent) MeleeAttackComponent->SetAllowCombo(isComboAllowed);
 }
 
 void AKfCharacter::ReactToComboWindowNotifyState_ResetComboSequence() {
-	SetCharacterOrientToCamera(true);
+	//SetCharacterOrientToCamera(true);
 	if (MeleeAttackComponent) MeleeAttackComponent->ResetAttackSequence();
 }
 
