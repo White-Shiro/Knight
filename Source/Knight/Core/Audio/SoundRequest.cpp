@@ -14,19 +14,19 @@ void FSoundRequest::Play(USceneComponent* requestor) const {
 		return;
 	}
 
-	const auto world = requestor->GetWorld();
+	const auto* world = requestor->GetWorld();
 	if (!world) return;
 
 #if WITH_EDITORONLY_DATA
 	if (bPreviewIgnoreAttenuation && world && world->WorldType == EWorldType::EditorPreview) {
 		UGameplayStatics::PlaySound2D(world, Sound, VolumeMultiplier, PitchMultiplier);
-	} else
+		return;
+	}
 #endif
-	{
-		if (bFollow && requestor) {
-			UGameplayStatics::SpawnSoundAttached(Sound, requestor, AttachName, FVector(ForceInit), EAttachLocation::SnapToTarget, false, VolumeMultiplier, PitchMultiplier);
-		} else {
-			UGameplayStatics::PlaySoundAtLocation(world, Sound, requestor->GetComponentLocation(), VolumeMultiplier, PitchMultiplier);
-		}
+
+	if (bFollow && requestor) {
+		UGameplayStatics::SpawnSoundAttached(Sound, requestor, AttachName, FVector(ForceInit), EAttachLocation::SnapToTarget, false, VolumeMultiplier, PitchMultiplier);
+	} else {
+		UGameplayStatics::PlaySoundAtLocation(world, Sound, requestor->GetComponentLocation(), VolumeMultiplier, PitchMultiplier);
 	}
 }

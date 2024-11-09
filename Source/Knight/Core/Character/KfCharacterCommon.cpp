@@ -137,6 +137,11 @@ UInputAction* KfCharacterCommon::GetDefaultAttack2Action() {
 	return Finder.Object;
 }
 
+UInputAction* KfCharacterCommon::GetDefaultSprintAction() {
+	static ConstructorHelpers::FObjectFinder<UInputAction> Finder = IA_FIND_PATH("IA_Sprint");
+	return Finder.Object;
+}
+
 UInputAction* KfCharacterCommon::GetDefaultToggleCombatStateAction() {
 	static ConstructorHelpers::FObjectFinder<UInputAction> Finder = IA_FIND_PATH("IA_ToggleCombat");
 	return Finder.Object;

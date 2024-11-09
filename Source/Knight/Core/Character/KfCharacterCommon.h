@@ -39,5 +39,6 @@ public:
 	static UInputAction* GetDefaultAttack2Action();
 	static UInputAction* GetDefaultToggleCombatStateAction();
 	static UInputAction* GetDefaultEvadeAction();
+	static UInputAction* GetDefaultSprintAction();
 	static FName HitBoxCollisionPresetName;
 };

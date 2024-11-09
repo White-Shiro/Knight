@@ -9,7 +9,10 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "CharacterTrajectoryComponent.h"
 #include "Knight/Core/Common.h"
+
+static const bool AKfCharacter_USE_MOVEMENT_COMPONENT = false;
 
 FKfCharacterInputActionSet::FKfCharacterInputActionSet() {
 	MoveAction = KfCharacterCommon::GetDefaultMoveAction();
@@ -21,6 +24,7 @@ FKfCharacterInputActionSet::FKfCharacterInputActionSet() {
 	ToggleCombatStateAction = KfCharacterCommon::GetDefaultToggleCombatStateAction();
 	Attack1Action = KfCharacterCommon::GetDefaultAttack1Action();
 	Attack2Action = KfCharacterCommon::GetDefaultAttack2Action();
+	SprintAction = KfCharacterCommon::GetDefaultSprintAction();
 }
 
 AKfCharacter::AKfCharacter(FObjectInitializer const& initializer) {
@@ -64,6 +68,8 @@ AKfCharacter::AKfCharacter(FObjectInitializer const& initializer) {
 	_characterMovement->bOrientRotationToMovement = false;
 	_characterMovement->bUseControllerDesiredRotation = true; // will slowly rotate character to desired rotation, using RotationRate
 	_characterMovement->RotationRate = FRotator(0.0f, 225.0f, 0.0f);
+
+	_characterTrajectory = CreateDefaultSubobject<UCharacterTrajectoryComponent>(UCharacterTrajectoryComponent::StaticClass()->GetFName(), false);
 
 	MeleeAttackComponent = CreateDefaultSubobject<UKfMeleeAttackComponent>(UKfMeleeAttackComponent::StaticClass()->GetFName(), false);
 	_targetComponent = CreateDefaultSubobject<UKfTargetComponent>(UKfTargetComponent::StaticClass()->GetFName(), false);
@@ -165,12 +171,12 @@ void AKfCharacter::ReactToAnimHitDetection(float frameDeltaTime, const UHitDetec
 }
 
 void AKfCharacter::ReactToComboWindowNotifyState(bool isBegin, bool isEnd, bool isComboAllowed) {
-	//SetCharacterOrientToCamera(isComboAllowed);
+	SetCharacterOrientToCamera(isComboAllowed);
 	if (MeleeAttackComponent) MeleeAttackComponent->SetAllowCombo(isComboAllowed);
 }
 
 void AKfCharacter::ReactToComboWindowNotifyState_ResetComboSequence() {
-	//SetCharacterOrientToCamera(true);
+	SetCharacterOrientToCamera(true);
 	if (MeleeAttackComponent) MeleeAttackComponent->ResetAttackSequence();
 }
 
@@ -180,7 +186,10 @@ FVector AKfCharacter::GetTargetLocation() {
 
 void AKfCharacter::OnMoveInput(const FInputActionValue& Value) {
 	_lastMoveInput += Value.Get<FVector2D>();
-	//KfCharacterCommon::HandleMoveInput_CameraBase(Value, this);
+
+	if (AKfCharacter_USE_MOVEMENT_COMPONENT) {
+		KfCharacterCommon::HandleMoveInput_CameraBase(Value, this);
+	}
 }
 
 void AKfCharacter::OnLookInput(const FInputActionValue& Value) {
@@ -199,9 +208,9 @@ void AKfCharacter::OnEvadeInput(const FInputActionValue& Value) {
 
 void AKfCharacter::OnStopJumpInput(const FInputActionValue& Value) {}
 
-void AKfCharacter::OnSprintInput(const FInputActionValue& Value) {}
+void AKfCharacter::OnSprintInput(const FInputActionValue& Value) { _animInstance->aIsSprinting = true; }
 
-void AKfCharacter::OnStopSprintInput(const FInputActionValue& Value) {}
+void AKfCharacter::OnStopSprintInput(const FInputActionValue& Value) { _animInstance->aIsSprinting = false; }
 
 void AKfCharacter::OnToggleCombatStateInput(const FInputActionValue& Value) {}
 
@@ -235,9 +244,9 @@ void AKfCharacter::SetCameraBoomState(const FSpringArmState& state) {
 }
 
 void AKfCharacter::SetCharacterOrientToCamera(bool shouldOrient) {
-	bUseControllerRotationYaw = shouldOrient;
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationRoll = false;
+	if (_characterMovement) {
+		_characterMovement->bUseControllerDesiredRotation = shouldOrient;
+	}
 }
 
 void AKfCharacter::OnAttackInput() {

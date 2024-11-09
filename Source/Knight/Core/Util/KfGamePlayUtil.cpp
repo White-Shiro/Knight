@@ -10,3 +10,8 @@ void KfGamePlayUtil::PlayHitNormalEffect(UParticleSystem* pPfx, const FVector& s
 	                                                     size, true,
 	                                                     EPSCPoolMethod::AutoRelease, true);
 }
+
+void KfGamePlayUtil::PlayEffectAt(UParticleSystem* pPfx, const FVector& size, const FVector& location, const FRotator& rotation, const UObject* ctxObject) {
+	if (!pPfx) return;
+	auto comp = UGameplayStatics::SpawnEmitterAtLocation(ctxObject, pPfx, location, rotation, size, true, EPSCPoolMethod::AutoRelease, true);
+}

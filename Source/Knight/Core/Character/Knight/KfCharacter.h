@@ -98,6 +98,9 @@ private:
 	UPROPERTY()
 	TObjectPtr<class UCharacterMovementComponent> _characterMovement;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Motion, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UCharacterTrajectoryComponent> _characterTrajectory;
+
 	SCameraRotationState _cameraRotationState;
 	FVector2d _lastMoveInput;
 	FSpringArmState _targetCameraBoomState;
@@ -115,6 +118,7 @@ public:
 	FORCEINLINE FVector GetCameraLocation() const { return FollowCamera->GetComponentLocation(); }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+	FORCEINLINE UCharacterTrajectoryComponent* GetCharacterTrajectory() const { return _characterTrajectory.Get(); }
 
 	virtual FAttackResult ReactToAttack(const FAttackReqeust& req) override;
 	virtual void ReactToAnimHitDetection(float frameDeltaTime, const UHitDetectionNotifyParam& payload) override;

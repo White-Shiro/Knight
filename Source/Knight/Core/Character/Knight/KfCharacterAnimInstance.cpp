@@ -1,8 +1,5 @@
 ﻿#include "KfCharacterAnimInstance.h"
 #include "KfCharacter.h"
-#include "GameFramework/PawnMovementComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include "Knight/Core/Character/Locomotion/KfFootStepAnimNotify.h"
 #include "Knight/Core/Common.h"
 
 void UKfCharacterAnimInstance::NativeBeginPlay() {
@@ -15,44 +12,10 @@ void UKfCharacterAnimInstance::NativeInitializeAnimation() {
 	aMoveDirection = FVector2f::ZeroVector;
 	_lastMoveInput = FVector2d::ZeroVector;
 	_knightCh = Cast<AKfCharacter>(TryGetPawnOwner());
-	//CacheWalkBlendSpaceInfo();
-}
 
-void UKfCharacterAnimInstance::SyncWalkPlaySpeed(const FVector& worldVel, const FVector& localInputV, const float meshScale) {
-	constexpr float animWalkMotionVelMag = 313.655f / 1.0f; // Root Motion Distance / Animation Length
-	constexpr float animBackWalkMotionVelMag = 131.86f / 1.8f;
-
-	const float animVelMag = localInputV.X > -0.1f ? animWalkMotionVelMag : animBackWalkMotionVelMag;
-	const float velocityMag = worldVel.Length();
-	const float playSpeed = velocityMag / (animVelMag * meshScale);
-	aMoveAnimPlaySpeed = velocityMag > 0 ? playSpeed : 1;
-}
-
-void UKfCharacterAnimInstance::SetWalkBlendspaceDirection2D(const FVector2d& localInputV) {
-	FVector2f calInputV2f(localInputV);
-
-	if (calInputV2f != FVector2f::ZeroVector) {
-		calInputV2f.Normalize();
-		calInputV2f *= WALK_BLENDSPACE_AXIS_SCALE;
+	if (_knightCh) {
+		characterTrajectory = _knightCh->GetCharacterTrajectory();
 	}
-
-	aMoveDirection.X = calInputV2f.X; // Right
-	aMoveDirection.Y = calInputV2f.Y; // Fwd
-}
-
-void UKfCharacterAnimInstance::SetWalkBlendspaceDirection1D(const FVector& worldVel, const float maxSpeed) {
-	if (worldVel == FVector::ZeroVector || maxSpeed == 0) {
-		aMoveDirection = FVector2f::ZeroVector;
-		return;
-	}
-
-	const float mag = worldVel.Length();
-
-	auto ratio = mag / maxSpeed;
-	ratio *= WALK_BLENDSPACE_AXIS_SCALE;
-
-	aMoveDirection.X = 0.f;
-	aMoveDirection.Y = ratio;
 }
 
 void UKfCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds) {
@@ -68,42 +31,51 @@ void UKfCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds) {
 	aIsWalking = _lastMoveInput != FVector2d::ZeroVector;
 
 	if (aIsWalking) {
-		// let state cached the lastMovingDirection for Blending
-		SetWalkBlendspaceDirection2D(_lastMoveInput);
+		SetWalkBlendSpaceDirection2D(_lastMoveInput);
 	}
 
 	UC_LOG_MSG_CONDITIONAL(logDirAndSpeed, "DIR: %s | SPD: %f", *aMoveDirection.ToString(), aMoveAnimPlaySpeed);
 }
 
-void UKfCharacterAnimInstance::SetMovementInput(const FVector2D& inputV) {
-	_lastMoveInput = inputV;
+void UKfCharacterAnimInstance::SyncWalkPlaySpeed(const FVector& worldVel, const FVector& localInputV, const float meshScale) {
+	constexpr float animWalkMotionVelMag = 313.655f / 1.0f; // Root Motion Distance / Animation Length
+	constexpr float animBackWalkMotionVelMag = 131.86f / 1.8f;
+
+	const float animVelMag = localInputV.X > -0.1f ? animWalkMotionVelMag : animBackWalkMotionVelMag;
+	const float velocityMag = worldVel.Length();
+	const float playSpeed = velocityMag / (animVelMag * meshScale);
+	aMoveAnimPlaySpeed = velocityMag > 0 ? playSpeed : 1;
 }
 
-void UKfCharacterAnimInstance::CacheWalkBlendSpaceInfo() {
-	if (!walkBlendSpace) {
+void UKfCharacterAnimInstance::SetWalkBlendSpaceDirection2D(const FVector2d& localInputV) {
+	FVector2f calInputV2f(localInputV);
+
+	if (calInputV2f != FVector2f::ZeroVector) {
+		calInputV2f.Normalize();
+		calInputV2f *= WALK_BLENDSPACE_AXIS_SCALE;
+	}
+
+	aMoveDirection.X = calInputV2f.X; // Right
+	aMoveDirection.Y = calInputV2f.Y; // Fwd
+}
+
+void UKfCharacterAnimInstance::SetWalkBlendSpaceDirection1D(const FVector& worldVel, const float maxSpeed) {
+	if (worldVel == FVector::ZeroVector || maxSpeed == 0) {
+		aMoveDirection = FVector2f::ZeroVector;
 		return;
 	}
 
-	const auto& samples = walkBlendSpace->GetBlendSamples();
+	const float mag = worldVel.Length();
 
-	for (const auto& sample : samples) {
-		auto v = sample.SampleValue;
+	auto ratio = mag / maxSpeed;
+	ratio *= WALK_BLENDSPACE_AXIS_SCALE;
 
-		if (v == FVector::ZeroVector) continue;
-		v.Normalize();
-		auto dir = GetWalkDirection({v.X, v.Y});
-		auto anim = sample.Animation;
+	aMoveDirection.X = 0.f;
+	aMoveDirection.Y = ratio;
+}
 
-		if (!_walkBlendSpaceMap.Contains(dir)) {
-			_walkBlendSpaceMap.Add(dir, anim);
-			//FTransform t;
-			//anim->GetBoneTransform(t)
-		} else {
-			UC_MSG("Duplicate Walk Direction: %s", *anim.GetName());
-		}
-	}
-
-	UC_MSG("CacheWalkBlendSpaceInfo")
+void UKfCharacterAnimInstance::SetMovementInput(const FVector2D& inputV) {
+	_lastMoveInput = inputV;
 }
 
 UKfCharacterAnimInstance::EWalkDirection UKfCharacterAnimInstance::GetWalkDirection(const FVector2d& inputV) {
@@ -142,10 +114,10 @@ float UKfCharacterAnimInstance::PlayMeleeMontage_Directional(const EAttackInputD
 
 	switch (atkDir) {
 		case EAttackInputDirection::Normal: montage = animSet.attackMontage_NA_Normal; break;
-		case EAttackInputDirection::Up: montage = animSet.attackMontage_NA_Normal; break;
-		case EAttackInputDirection::Left: montage = animSet.attackMontage_NA_Left; break;
-		case EAttackInputDirection::Right: montage = animSet.attackMontage_NA_Right; break;
-		case EAttackInputDirection::Down: montage = animSet.attackMontage_NA_Down; break;
+		case EAttackInputDirection::Up:     montage = animSet.attackMontage_NA_Normal; break;
+		case EAttackInputDirection::Left:   montage = animSet.attackMontage_NA_Left;   break;
+		case EAttackInputDirection::Right:  montage = animSet.attackMontage_NA_Right;  break;
+		case EAttackInputDirection::Down:   montage = animSet.attackMontage_NA_Down;   break;
 	}
 
 	float length = 0.f;
@@ -183,7 +155,27 @@ void UKfCharacterAnimInstance::PlayEvadeMontage(const EEvadeDirection evadeDir) 
 	Montage_Play(mtg, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
 }
 
-void UKfCharacterAnimInstance::NotifyFootStep(const EFootStepType foot_step) const {
-	footStepSoundRequest.Play(GetSkelMeshComponent());
-}
+void UKfCharacterAnimInstance::NotifyFootStep(const FFootStepEvent& footStep) {
+	aCurrentForwardFoot = footStep.footStepType;
 
+	auto* mesh = GetSkelMeshComponent();
+	if (!mesh) return;
+
+	if (footStep.bPlaySound) footStepSoundRequest.Play(mesh);
+	if (!footStep.bPlayVFX) return;
+
+	static FName footStep_L_SocketName(TEXT("footStep_L"));
+	static FName footStep_R_SocketName(TEXT("footStep_R"));
+
+	// Play VFX At foot location
+	switch (footStep.footStepType) {
+		case EFootStepType::None: break;
+		case EFootStepType::Left: footStepVFXRequest.EmitAt(mesh->GetSocketLocation(footStep_L_SocketName), mesh); break;
+		case EFootStepType::Right: footStepVFXRequest.EmitAt(mesh->GetSocketLocation(footStep_R_SocketName), mesh); break;
+		case EFootStepType::Both: {
+			footStepVFXRequest.EmitAt(mesh->GetSocketLocation(footStep_R_SocketName), mesh);
+			footStepVFXRequest.EmitAt(mesh->GetSocketLocation(footStep_L_SocketName), mesh);
+		} break;
+		default: break;
+	}
+}

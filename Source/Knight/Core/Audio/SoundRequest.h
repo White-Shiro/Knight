@@ -4,7 +4,6 @@
 USTRUCT(BlueprintType)
 struct FSoundRequest {
 	GENERATED_BODY()
-
 	FSoundRequest();
 
 	// Sound to Play
@@ -20,7 +19,7 @@ struct FSoundRequest {
 	float PitchMultiplier;
 
 	// If this sound should follow its owner
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundRequest")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category ="SoundRequest")
 	uint32 bFollow:1;
 
 #if WITH_EDITORONLY_DATA
@@ -34,4 +33,3 @@ struct FSoundRequest {
 
 	void Play(USceneComponent* requestor) const;
 };
-

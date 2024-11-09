@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
 #include "Knight/Core/Audio/SoundRequest.h"
+#include "Knight/Core/Effect/VFXRequest.h"
+#include "Knight/Core/Character/Animation/KfFootStepAnimNotify.h"
 #include "Knight/Core/Combat/CombatCommon.h"
 #include "KfCharacterAnimInstance.generated.h"
 
@@ -46,8 +48,6 @@ struct FAttackAnimationSet {
 	UAnimMontage* evade_Back_Montage = nullptr;
 };
 
-
-
 UCLASS()
 class KNIGHT_API UKfCharacterAnimInstance : public UAnimInstance {
 	GENERATED_BODY()
@@ -61,8 +61,17 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim Variables")
 	bool aIsWalking = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim Variables")
+	bool aIsSprinting = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim Variables")
+	EFootStepType aCurrentForwardFoot = EFootStepType::None;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim Variables")
 	FAttackAnimationSet attackAnimationSet;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Anim Variables")
+	TObjectPtr<class UCharacterTrajectoryComponent> characterTrajectory;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Debug")
 	bool logDirAndSpeed = false;
@@ -73,29 +82,26 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Walk")
 	FSoundRequest footStepSoundRequest;
 
+	UPROPERTY(EditAnywhere, Blueprintable, Category = "Walk")
+	FVFXRequest footStepVFXRequest;
+
 	virtual void NativeBeginPlay() override;
 	virtual void NativeInitializeAnimation() override;
-	void SyncWalkPlaySpeed(const FVector& worldVel, const FVector& localInputV, float meshScale);
-	void SetWalkBlendspaceDirection2D(const FVector2d& localInputV);
-	void SetWalkBlendspaceDirection1D(const FVector& worldVel, const float maxSpeed);
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+	void SyncWalkPlaySpeed(const FVector& worldVel, const FVector& localInputV, float meshScale);
+	void SetWalkBlendSpaceDirection2D(const FVector2d& localInputV);
+	void SetWalkBlendSpaceDirection1D(const FVector& worldVel, const float maxSpeed);
 	void SetMovementInput(const FVector2D& inputV);
 
 	float PlayMeleeMontage(int32 montageIndex);
 	float PlayMeleeMontage_Directional(const EAttackInputDirection atkDir);
 	void PlayHurtMontage();
 	void PlayEvadeMontage(const EEvadeDirection evadeDir = EEvadeDirection::Backward);
-	void NotifyFootStep(enum class EFootStepType foot_step) const;
-
-protected:
-	void CacheWalkBlendSpaceInfo();
+	void NotifyFootStep(const FFootStepEvent& footStep);
 
 private:
-
 	static constexpr float WALK_BLENDSPACE_AXIS_SCALE = 100.f;
-
-	TObjectPtr<class AKfCharacter> _knightCh = nullptr;
-
+	TObjectPtr<class AKfCharacter> _knightCh;
 	FVector2D _lastMoveInput;
 
 	enum class EWalkDirection {
@@ -105,7 +111,5 @@ private:
 		Right
 	};
 
-	TMap<EWalkDirection, TObjectPtr<UAnimSequence>> _walkBlendSpaceMap;
 	static EWalkDirection GetWalkDirection(const FVector2d& inputV);
-
 };
