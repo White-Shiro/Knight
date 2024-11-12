@@ -23,32 +23,40 @@ void UKfTargetComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 void UKfTargetComponent::UpdateCamera(float dt) {
 	if(!_target.Get()) return;
 
-	auto owner = Cast<AKfCharacter>(GetOwner());
+	const auto owner = Cast<AKfCharacter>(GetOwner());
 	const auto targetLoc = _target->GetTargetLocation();
+	const auto selfLoc = owner->GetActorLocation();
 
 	// Set Actor Rotation
-	const auto chTotargetDir = targetLoc - owner->GetActorLocation();
-	auto chRot = FRotationMatrix::MakeFromX(chTotargetDir).Rotator();
-	chRot.Pitch = 0;
-	chRot.Roll = 0;
-	owner->SetActorRotation(chRot);
+	auto targetVector = targetLoc - selfLoc;
+	targetVector.Z = 0;
+	const auto targetDist = targetVector.Size();
+	if (FMath::IsNearlyZero(targetDist)) return;
+	const auto targetDir = targetVector / targetDist;
+	auto facing = owner->GetActorForwardVector();
+	facing.Z = 0;
+	facing.Normalize();
 
+	if (facing.Dot(targetDir) < -0.2f) {
+		ReleaseTarget();
+		return;
+	}
+
+	if (targetDist < 1000.f) return;
 	// Set Player Controller
 	const auto pc = owner->GetInstigatorController();
 	if (!pc) return;
 
 	const auto camLoc = owner->GetCameraLocation();
+	const auto ctrlRot = pc->GetControlRotation();
 	const auto camDir = targetLoc - camLoc;
 
-	auto rot = FRotationMatrix::MakeFromX(camDir).Rotator();
+	const auto yawLookAtRot = FRotationMatrix::MakeFromX(camDir).Rotator();
+	const auto clampPitch = FMath::ClampAngle(ctrlRot.Pitch, _lockPitchRange.X, _lockPitchRange.Y);
+	const FRotator targetCtrlRot = FRotator(clampPitch, yawLookAtRot.Yaw, ctrlRot.Roll);
+	const float adjustedLockSpeed = _lockSpeed * 0.5f; // Adjust this value as needed
 
-	// Clamp Pitch
-	rot.Pitch = FMath::ClampAngle(rot.Pitch, _lockPitchRange.X, _lockPitchRange.Y);
-
-	// Adjust the lock speed to make the camera move slower
-	float adjustedLockSpeed = _lockSpeed * 0.5f; // Adjust this value as needed
-
-	pc->SetControlRotation(FMath::RInterpTo(pc->GetControlRotation(), rot, dt, adjustedLockSpeed));
+	pc->SetControlRotation(FMath::RInterpTo(ctrlRot, targetCtrlRot, dt, adjustedLockSpeed));
 }
 
 static ITargetable* _GetClosestTarget(const TArray<FOverlapResult>& overlaps, const FVector& loc) {

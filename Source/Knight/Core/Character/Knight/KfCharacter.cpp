@@ -78,8 +78,8 @@ AKfCharacter::AKfCharacter(FObjectInitializer const& initializer) {
 	_thridPersonCameraBoomState.targetArmLength = 2000.f;
 	_thridPersonCameraBoomState.interpSpeed = 10.f;
 
-	_lockModeCameraBoomState.socketOffset = FVector(0, 0, 750);
-	_lockModeCameraBoomState.targetArmLength = 3000.f;
+	_lockModeCameraBoomState.socketOffset = FVector(0, 450, 450);
+	_lockModeCameraBoomState.targetArmLength = 2000.f;
 	_lockModeCameraBoomState.interpSpeed = 10.f;
 
 	_lastMoveInput = FVector2D::ZeroVector;
