@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Knight/Core/Audio/SoundRequest.h"
+#include "Knight/Core/Effect/VFXRequest.h"
 #include "Knight/Core/Combat/CombatCommon.h"
 #include "KfMeleeAttackComponent.generated.h"
 
@@ -11,13 +12,10 @@ struct FSwordHitEffectSet {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, Category = "Hit Effect")
-	TObjectPtr<UParticleSystem> hitEffect_Pawn = nullptr;
+	FVFXRequest hitEffect_Pawn;
 
 	UPROPERTY(EditAnywhere, Category = "Hit Effect")
-	TObjectPtr<UParticleSystem> hitEffect_Ground = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "Hit Effect")
-	FVector effectSize = FVector::One();
+	FVFXRequest hitEffect_Ground;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound")
 	FSoundRequest hitSoundRequest_Pawn;

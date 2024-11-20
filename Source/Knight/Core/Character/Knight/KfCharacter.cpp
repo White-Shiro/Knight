@@ -14,20 +14,7 @@
 
 static const bool AKfCharacter_USE_MOVEMENT_COMPONENT = false;
 
-FKfCharacterInputActionSet::FKfCharacterInputActionSet() {
-	MoveAction = KfCharacterCommon::GetDefaultMoveAction();
-	LookAction = KfCharacterCommon::GetDefaultLookAction();
-	ZoomAction = KfCharacterCommon::GetDefaultZoomAction();
-	JumpAction = KfCharacterCommon::GetDefaultJumpAction();
-	EvadeAction = KfCharacterCommon::GetDefaultEvadeAction();
-	LockTargetAction = KfCharacterCommon::GetDefaultLockTargetAction();
-	ToggleCombatStateAction = KfCharacterCommon::GetDefaultToggleCombatStateAction();
-	Attack1Action = KfCharacterCommon::GetDefaultAttack1Action();
-	Attack2Action = KfCharacterCommon::GetDefaultAttack2Action();
-	SprintAction = KfCharacterCommon::GetDefaultSprintAction();
-}
-
-AKfCharacter::AKfCharacter(FObjectInitializer const& initializer) {
+AKfCharacter::AKfCharacter(const FObjectInitializer& initializer) {
 	PrimaryActorTick.bCanEverTick = true;
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorld;
@@ -41,7 +28,6 @@ AKfCharacter::AKfCharacter(FObjectInitializer const& initializer) {
 	capsule->SetCollisionProfileName(msCollisionPresetName);
 
 	_characterMovement = GetCharacterMovement();
-
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(USpringArmComponent::StaticClass()->GetFName(), false);
 	CameraBoom->SetupAttachment(RootComponent);
@@ -74,13 +60,13 @@ AKfCharacter::AKfCharacter(FObjectInitializer const& initializer) {
 	MeleeAttackComponent = CreateDefaultSubobject<UKfMeleeAttackComponent>(UKfMeleeAttackComponent::StaticClass()->GetFName(), false);
 	_targetComponent = CreateDefaultSubobject<UKfTargetComponent>(UKfTargetComponent::StaticClass()->GetFName(), false);
 
-	_thridPersonCameraBoomState.socketOffset = FVector(0, 700, 550);
-	_thridPersonCameraBoomState.targetArmLength = 2000.f;
-	_thridPersonCameraBoomState.interpSpeed = 10.f;
+	_thirdPersonCameraBoomState.springArmState.socketOffset = FVector(0, 700, 550);
+	_thirdPersonCameraBoomState.springArmState.targetArmLength = 2000.f;
+	_thirdPersonCameraBoomState.springArmState.interpSpeed = 10.f;
 
-	_lockModeCameraBoomState.socketOffset = FVector(0, 450, 450);
-	_lockModeCameraBoomState.targetArmLength = 2000.f;
-	_lockModeCameraBoomState.interpSpeed = 10.f;
+	_lockModeCameraBoomState.springArmState.socketOffset = FVector(0, 450, 450);
+	_lockModeCameraBoomState.springArmState.targetArmLength = 2000.f;
+	_lockModeCameraBoomState.springArmState.interpSpeed = 10.f;
 
 	_lastMoveInput = FVector2D::ZeroVector;
 }
@@ -88,13 +74,12 @@ AKfCharacter::AKfCharacter(FObjectInitializer const& initializer) {
 void AKfCharacter::BeginPlay() {
 	Super::BeginPlay();
 	_animInstance = Cast<UKfCharacterAnimInstance>(GetMesh()->GetAnimInstance());
-	SetCameraBoomState(_thridPersonCameraBoomState);
+	SetCameraBoomConfig(&_thirdPersonCameraBoomState);
 }
 
 void AKfCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 	ConsumeMovementInput();
-	OnUpdateCamera(DeltaTime);
 }
 
 void AKfCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
@@ -155,7 +140,7 @@ FVector AKfCharacter::GetLocalInputVector() const {
 	return localVel;
 }
 
-FAttackResult AKfCharacter::ReactToAttack(const FAttackReqeust& req) {
+FAttackResult AKfCharacter::ReactToAttack(const FAttackRequest& req) {
 	const double currentTime = GetWorld()->GetTimeSeconds();
 	if (!_hurtHistory.IsHurtable(currentTime)) {
 		return FAttackResult(false);
@@ -216,37 +201,34 @@ void AKfCharacter::OnToggleCombatStateInput(const FInputActionValue& Value) {}
 
 void AKfCharacter::OnLockTargetInput(const FInputActionValue& Value) {
 	if (!_targetComponent) return;
-	if (_targetComponent->IsActive()) {
-		_targetComponent->ReleaseTarget();
-		SetCameraBoomState(_thridPersonCameraBoomState);
-		return;
-	}
-
-	if (_targetComponent->ScanTarget()) {
-		SetCameraBoomState(_lockModeCameraBoomState);
-		return;
-	}
+	const bool hasTarget = _targetComponent->ToggleTargetMode();
+	SetCameraBoomConfig(hasTarget ? &_lockModeCameraBoomState : &_thirdPersonCameraBoomState);
 }
 
 void AKfCharacter::OnUpdateCamera(float deltaTime) {
-	const float interpSpeed = _targetCameraBoomState.interpSpeed;
-	const auto lerpingOffset = FMath::Lerp(CameraBoom->SocketOffset, _targetCameraBoomState.socketOffset, deltaTime * interpSpeed);
-	const auto lerpingLength = FMath::Lerp(CameraBoom->TargetArmLength, _targetCameraBoomState.targetArmLength, deltaTime * interpSpeed);
-
-	// Smooth Damp
-	//CameraBoom->SocketOffset = FMath::Damp(CameraBoom->SocketOffset, _targetCameraBoomState.socketOffset, _targetCameraBoomState.socketOffset, 0.1f, 1000.f, deltaTime);
-	CameraBoom->SocketOffset = lerpingOffset;
-	CameraBoom->TargetArmLength = lerpingLength;
+	if (_currentSpringArmConfig) _currentSpringArmConfig->springArmState.InterpPosition(CameraBoom, deltaTime);
 }
 
-void AKfCharacter::SetCameraBoomState(const FSpringArmState& state) {
-	_targetCameraBoomState = state;
+void AKfCharacter::SetCameraBoomConfig(FCameraConfig* config) {
+	_currentSpringArmConfig = config;
+	if (config) config->springArmState.ApplyBool(CameraBoom);
 }
 
 void AKfCharacter::SetCharacterOrientToCamera(bool shouldOrient) {
 	if (_characterMovement) {
 		_characterMovement->bUseControllerDesiredRotation = shouldOrient;
 	}
+}
+
+void AKfCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) {
+	OnUpdateCamera(DeltaTime);
+#if 0
+	if (_targetComponent && _targetComponent->hasTarget()) {
+		_targetComponent->CalcCamera(DeltaTime, FollowCamera, _currentSpringArmConfig, OutResult);
+	}
+#endif
+
+	Super::CalcCamera(DeltaTime, OutResult);
 }
 
 void AKfCharacter::OnAttackInput() {

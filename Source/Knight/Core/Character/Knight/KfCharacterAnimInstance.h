@@ -101,6 +101,7 @@ public:
 
 private:
 	static constexpr float WALK_BLENDSPACE_AXIS_SCALE = 100.f;
+
 	TObjectPtr<class AKfCharacter> _knightCh;
 	FVector2D _lastMoveInput;
 

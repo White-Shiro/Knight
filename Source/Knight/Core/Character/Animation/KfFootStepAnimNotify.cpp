@@ -1,4 +1,7 @@
 ﻿#include "KfFootStepAnimNotify.h"
+
+#include "Knight/Core/Common.h"
+#include "Knight/Core/Fmt/MyFmt.h"
 #include "Knight/Core/Character/Knight/KfCharacterAnimInstance.h"
 
 FFootStepEvent::FFootStepEvent() {

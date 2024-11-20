@@ -1,9 +1,10 @@
 ﻿#include "SoundRequest.h"
 #include "Kismet/GameplayStatics.h"
 
-FSoundRequest::FSoundRequest() {
+FSoundRequest::FSoundRequest() noexcept {
 	VolumeMultiplier = 1.f;
 	PitchMultiplier = 1.f;
+	bPreviewIgnoreAttenuation = false;
 }
 
 void FSoundRequest::Play(USceneComponent* requestor) const {

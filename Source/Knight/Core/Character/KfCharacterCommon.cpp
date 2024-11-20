@@ -7,7 +7,44 @@
 
 #define IA_FIND_PATH(AssetName) TEXT("/Script/EnhancedInput.InputAction'/Game/Core/Config/Input/" AssetName "." AssetName "'");
 
+FKfCharacterInputActionSet::FKfCharacterInputActionSet() {
+	MoveAction = KfCharacterCommon::GetDefaultMoveAction();
+	LookAction = KfCharacterCommon::GetDefaultLookAction();
+	ZoomAction = KfCharacterCommon::GetDefaultZoomAction();
+	JumpAction = KfCharacterCommon::GetDefaultJumpAction();
+	EvadeAction = KfCharacterCommon::GetDefaultEvadeAction();
+	LockTargetAction = KfCharacterCommon::GetDefaultLockTargetAction();
+	ToggleCombatStateAction = KfCharacterCommon::GetDefaultToggleCombatStateAction();
+	Attack1Action = KfCharacterCommon::GetDefaultAttack1Action();
+	Attack2Action = KfCharacterCommon::GetDefaultAttack2Action();
+	SprintAction = KfCharacterCommon::GetDefaultSprintAction();
+}
+
+void FSpringArmState::InterpPosition(USpringArmComponent* springArm, float deltaTime) const {
+	const float alpha = FMath::Clamp(interpSpeed * deltaTime, 0.f, 1.f);
+	const auto interpOffset = FMath::Lerp(springArm->SocketOffset, socketOffset, alpha);
+	const auto interpLength = FMath::Lerp(springArm->TargetArmLength, targetArmLength, alpha);
+
+	// Smooth Damp
+	//CameraBoom->SocketOffset = FMath::Damp(CameraBoom->SocketOffset, _targetCameraBoomState.socketOffset, _targetCameraBoomState.socketOffset, 0.1f, 1000.f, deltaTime);
+	springArm->SocketOffset = interpOffset;
+	springArm->TargetArmLength = interpLength;
+}
+
+void FSpringArmState::ApplyPosition(USpringArmComponent* springArm) const {
+	if (!springArm) return;
+	springArm->SocketOffset = socketOffset;
+	springArm->TargetArmLength = targetArmLength;
+}
+
+void FSpringArmState::ApplyBool(USpringArmComponent* springArm) const {
+	if (!springArm) return;
+	springArm->bUsePawnControlRotation = usePawnControllerRotation;
+	springArm->bEnableCameraLag = useCameraLag;
+}
+
 static void _AddMovementFromRotation(ACharacter* character, const FVector2D& movementInput, const FRotator& rotation) {
+	if (!character) return;
 	const FRotator yawRotation(0, rotation.Yaw, 0);
 	const FQuat rotationQuat(yawRotation);
 
@@ -42,7 +79,7 @@ void KfCharacterCommon::HandleMoveInput_CameraBase(const FInputActionValue& Valu
 }
 
 void KfCharacterCommon::HandleTurnInput(const FInputActionValue& Value, ACharacter* character,
-                                        SCameraRotationState& cameraRotationState) {
+                                        FCameraRotationState& cameraRotationState) {
 	if (!character) return;
 	if(!character->Controller) return;
 
@@ -60,12 +97,12 @@ void KfCharacterCommon::HandleTurnInput(const FInputActionValue& Value, ACharact
 }
 
 void KfCharacterCommon::HandleLookInput(const FInputActionValue& Value, ACharacter* character,
-	SCameraRotationState& cameraRotationState, float CameraLookSpeed) {
+	FCameraRotationState& cameraRotationState, float cameraLookSpeed) {
 	if (!character) return;
 	const auto* pc = (character->GetInstigatorController());
 	if (!pc) return;
 
-	const float scaler = CameraLookSpeed;
+	const float scaler = cameraLookSpeed;
 	const FVector2D LookAxisVector = Value.Get<FVector2D>();
 
 	cameraRotationState.lookOffsetRotation.Yaw += LookAxisVector.X * scaler;
@@ -89,7 +126,7 @@ void KfCharacterCommon::HandleZoomInput(const FInputActionValue& Value, ACharact
 	cameraBoom->TargetArmLength = FMath::Clamp(newLength, clampRange.X, clampRange.Y);
 }
 
-void KfCharacterCommon::UpdateCameraRotation(float deltaTime, const ACharacter* character, SCameraRotationState& cameraRotationState,
+void KfCharacterCommon::UpdateCameraRotation(float deltaTime, const ACharacter* character, FCameraRotationState& cameraRotationState,
 	float interpolateSpeed) {
 
 	cameraRotationState.currentFacing =

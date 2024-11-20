@@ -1,12 +1,8 @@
 ﻿#include "KfMeleeAttackComponent.h"
-
-#include "KfCharacter.h"
 #include "KfCharacterAnimInstance.h"
 #include "Knight/Core/Common.h"
-#include "Knight/Core/Character/KfCharacterCommon.h"
 #include "Knight/Core/Combat/CombatCommon.h"
 #include "Knight/Core/Combat/HitDetectionNotifyState.h"
-#include "Knight/Core/Util/KfGamePlayUtil.h"
 
 UKfMeleeAttackComponent::UKfMeleeAttackComponent() {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -78,7 +74,7 @@ void UKfMeleeAttackComponent::DoMeleeAttack_Directional(const FVector2d& movemen
 	}
 
 	if (!_meleeSequenceState.bAllowCombo) return;
-	auto eDirection = CombatUtil::GetAttackInputDirection(movementInput);
+	auto eDirection = CombatUtils::GetAttackInputDirection(movementInput);
 
 	if(_isDirectionRepeated(_meleeSequenceState, eDirection)) {
 		if (_debug) {
@@ -158,8 +154,8 @@ FTraceHandle UKfMeleeAttackComponent::TraceSwordHits(const FVector& start, const
 	return h;
 }
 
-static FAttackReqeust CreateAttackRequest(const FHitResult& hitResult) {
-	const FAttackReqeust request = {};
+static FAttackRequest CreateAttackRequest(const FHitResult& hitResult) {
+	const FAttackRequest request = {};
 	return request;
 }
 
@@ -170,19 +166,17 @@ void UKfMeleeAttackComponent::OnSwordHitResult(const FHitResult& hitResult) cons
 	const auto req = CreateAttackRequest(hitResult);
 	const auto result = attackable->ReactToAttack(req);
 
-	if (result.success) {
-		const auto* world = GetWorld();
-		if (auto* pPfx = _swordHitEffectSet.hitEffect_Pawn.Get()) {
-			KfGamePlayUtil::PlayHitNormalEffect(pPfx, _swordHitEffectSet.effectSize, hitResult, world);
-		}
+	if (!result.success) return;
 
-		if (const auto root = GetOwner()->GetRootComponent()) {
-			_swordHitEffectSet.hitSoundRequest_Pawn.Play(root);
+	if (hitResult.Component.IsValid()) {
+		if (const auto targetSceneComp = hitResult.Component.Get()) {
+			_swordHitEffectSet.hitEffect_Pawn.EmitHitImpact(hitResult, targetSceneComp);
+			_swordHitEffectSet.hitSoundRequest_Pawn.Play(targetSceneComp);
 		}
+	}
 
-		if (_debug) {
-			DrawDebugSphere(GetWorld(), hitResult.ImpactPoint, 100.f, 4, FColor::Red, _persistentLine, 1.f, 0, 1.f);
-		}
+	if (_debug) {
+		DrawDebugSphere(GetWorld(), hitResult.ImpactPoint, 100.f, 4, FColor::Red, _persistentLine, 1.f, 0, 1.f);
 	}
 }
 
@@ -205,7 +199,7 @@ bool UKfMeleeAttackComponent::DoSwingHits(const UHitDetectionNotifyParam& param)
 	static const FName WEAPON_SOCKET_RIGHT = "hand_r_slot";
 
 	if (!param.meshComp->DoesSocketExist(WEAPON_SOCKET_RIGHT)) {
-		UC_LOG_ERROR("Weapon Socket %s Not Found!", *WEAPON_SOCKET_RIGHT.ToString());
+		UC_LOG_MSG("Weapon Socket %s Not Found! ", ToCStr(WEAPON_SOCKET_RIGHT.ToString()));
 		return true;
 	}
 	const auto t = param.meshComp->GetSocketTransform(WEAPON_SOCKET_RIGHT);

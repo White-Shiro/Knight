@@ -7,57 +7,6 @@
 #include "Knight/Core/Combat/CombatCommon.h"
 #include "KfCharacter.generated.h"
 
-USTRUCT(BlueprintType)
-struct FKfCharacterInputActionSet {
-	GENERATED_BODY()
-
-	FKfCharacterInputActionSet();
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* JumpAction = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* EvadeAction = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* SprintAction = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* MoveAction = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* LookAction = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* LockTargetAction = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* ZoomAction = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* ToggleCombatStateAction = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* Attack1Action = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* Attack2Action = nullptr;
-};
-
-USTRUCT(BlueprintType)
-struct FSpringArmState {
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FVector socketOffset;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float targetArmLength;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float interpSpeed = 10.0f;
-};
-
 UCLASS()
 class KNIGHT_API AKfCharacter final : public ACharacter,
                                       public ITargetable,
@@ -87,10 +36,10 @@ private:
 	FKfCharacterInputActionSet _inputActionSet;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	FSpringArmState _lockModeCameraBoomState;
+	FCameraConfig _lockModeCameraBoomState;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	FSpringArmState _thridPersonCameraBoomState;
+	FCameraConfig _thirdPersonCameraBoomState;
 
 	UPROPERTY()
 	TObjectPtr<class UKfCharacterAnimInstance> _animInstance;
@@ -101,13 +50,13 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Motion, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UCharacterTrajectoryComponent> _characterTrajectory;
 
-	SCameraRotationState _cameraRotationState;
+	FCameraRotationState _cameraRotationState;
 	FVector2d _lastMoveInput;
-	FSpringArmState _targetCameraBoomState;
+	FCameraConfig* _currentSpringArmConfig = nullptr;
 	FHurtHistory _hurtHistory;
 
 public:
-	explicit AKfCharacter(FObjectInitializer const& initializer = FObjectInitializer::Get());
+	AKfCharacter(const FObjectInitializer& initializer = FObjectInitializer::Get());
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -120,10 +69,11 @@ public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCharacterTrajectoryComponent* GetCharacterTrajectory() const { return _characterTrajectory.Get(); }
 
-	virtual FAttackResult ReactToAttack(const FAttackReqeust& req) override;
+	virtual FAttackResult ReactToAttack(const FAttackRequest& req) override;
 	virtual void ReactToAnimHitDetection(float frameDeltaTime, const UHitDetectionNotifyParam& payload) override;
 	virtual void ReactToComboWindowNotifyState(const bool isBegin, const bool isEnd, const bool isComboAllowed) override;
 	virtual void ReactToComboWindowNotifyState_ResetComboSequence() override;
+	virtual void CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) override;
 
 	FORCEINLINE FVector2d GetLastMovementInput() const { return _lastMoveInput; }
 
@@ -141,7 +91,7 @@ protected:
 	void OnHeavyAttackInput();
 	void ConsumeMovementInput();
 	void OnUpdateCamera(float deltaTime);
-	void SetCameraBoomState(const FSpringArmState& state);
+	void SetCameraBoomConfig(FCameraConfig* config);
 	void SetCharacterOrientToCamera(bool shouldOrient);
 
 public:

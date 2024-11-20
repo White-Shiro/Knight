@@ -10,10 +10,6 @@ public class Knight : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		foreach (string include in PublicIncludePaths) {
-			Console.WriteLine("include: " + include);
-		}
-
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"Core",
 			"CoreUObject",
@@ -24,7 +20,15 @@ public class Knight : ModuleRules
 			"MotionTrajectory",
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "EnhancedInput", "AITestSuite", "AnimGraphRuntime" });
+		PrivateDependencyModuleNames.AddRange(new string[] {
+			"EnhancedInput",
+			"AITestSuite",
+			"AnimGraphRuntime",
+			"Niagara",
+			"AIModule",
+			"NavigationSystem",
+			"GameplayTasks",
+		});
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

@@ -4,7 +4,7 @@
 USTRUCT(BlueprintType)
 struct FSoundRequest {
 	GENERATED_BODY()
-	FSoundRequest();
+	FSoundRequest() noexcept;
 
 	// Sound to Play
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SoundRequest", meta=(ExposeOnSpawn = true))

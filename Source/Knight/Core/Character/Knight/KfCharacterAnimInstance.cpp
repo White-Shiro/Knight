@@ -11,16 +11,32 @@ void UKfCharacterAnimInstance::NativeInitializeAnimation() {
 	aMoveAnimPlaySpeed = 1.0f;
 	aMoveDirection = FVector2f::ZeroVector;
 	_lastMoveInput = FVector2d::ZeroVector;
+
+	// test
+
+	if (_knightCh) {
+		UC_MSG("Knight Character Found");
+	}
+
+	if (!_knightCh) {
+		UC_LOG_ERROR_MSG("Knight Character Not Found");
+	}
+
 	_knightCh = Cast<AKfCharacter>(TryGetPawnOwner());
 
 	if (_knightCh) {
+		UC_MSG("Knight Character Found");
+	}
+
+	if (_knightCh.Get()) {
+		UC_MSG("Knight Character Found Get");
 		characterTrajectory = _knightCh->GetCharacterTrajectory();
 	}
 }
 
 void UKfCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds) {
 	Super::NativeUpdateAnimation(DeltaSeconds);
-	if (!_knightCh) return;
+	if (!_knightCh.Get()) return;
 
 	// const auto worldVel = _knightCh->GetVelocity();
 	// const auto localInputV = _knightCh->GetLocalInputVector();
@@ -170,11 +186,11 @@ void UKfCharacterAnimInstance::NotifyFootStep(const FFootStepEvent& footStep) {
 	// Play VFX At foot location
 	switch (footStep.footStepType) {
 		case EFootStepType::None: break;
-		case EFootStepType::Left: footStepVFXRequest.EmitAt(mesh->GetSocketLocation(footStep_L_SocketName), mesh); break;
-		case EFootStepType::Right: footStepVFXRequest.EmitAt(mesh->GetSocketLocation(footStep_R_SocketName), mesh); break;
+		case EFootStepType::Left: footStepVFXRequest.EmitParticleAt(mesh->GetSocketLocation(footStep_L_SocketName), FRotator::ZeroRotator, mesh); break;
+		case EFootStepType::Right: footStepVFXRequest.EmitParticleAt(mesh->GetSocketLocation(footStep_R_SocketName), FRotator::ZeroRotator, mesh); break;
 		case EFootStepType::Both: {
-			footStepVFXRequest.EmitAt(mesh->GetSocketLocation(footStep_R_SocketName), mesh);
-			footStepVFXRequest.EmitAt(mesh->GetSocketLocation(footStep_L_SocketName), mesh);
+			footStepVFXRequest.EmitParticleAt(mesh->GetSocketLocation(footStep_R_SocketName), FRotator::ZeroRotator, mesh);
+			footStepVFXRequest.EmitParticleAt(mesh->GetSocketLocation(footStep_L_SocketName), FRotator::ZeroRotator, mesh);
 		} break;
 		default: break;
 	}

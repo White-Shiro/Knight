@@ -22,35 +22,15 @@ enum class EAttackInputDirection {
 	Right,
 };
 
-namespace CombatUtil {
-	static constexpr float DIRECTIONAL_INPUT_DEADZONE = 0.2f;
-
-	FORCEINLINE EAttackInputDirection GetAttackInputDirection(const FVector2d& direction) {
-		if (direction.X > DIRECTIONAL_INPUT_DEADZONE) return EAttackInputDirection::Right;
-		if (direction.X < -DIRECTIONAL_INPUT_DEADZONE) return EAttackInputDirection::Left;
-		if (direction.Y > DIRECTIONAL_INPUT_DEADZONE) return EAttackInputDirection::Up;
-		if (direction.Y < -DIRECTIONAL_INPUT_DEADZONE) return EAttackInputDirection::Down;
-		return EAttackInputDirection::Normal;
-	}
-
-	FORCEINLINE EEvadeDirection GetEvadeDirection(const FVector2d& direction) {
-		if (direction.X > DIRECTIONAL_INPUT_DEADZONE) return EEvadeDirection::Right;
-		if (direction.X < -DIRECTIONAL_INPUT_DEADZONE) return EEvadeDirection::Left;
-		if (direction.Y > DIRECTIONAL_INPUT_DEADZONE) return EEvadeDirection::Forward;
-		if (direction.Y < -DIRECTIONAL_INPUT_DEADZONE) return EEvadeDirection::Backward;
-		return EEvadeDirection::None;
-	}
-}
-
-struct FAttackReqeust {
+struct FAttackRequest {
 	float damage = 0;
 };
 
 struct FHurtHistory {
-	const float HURT_INTERVEL = 0.1f;
+	const float HURT_INTERVAL = 0.1f;
 	float lastHurtTime = 0.0f;
 	FORCEINLINE void SetHurtTime(const double time) { lastHurtTime = time; }
-	FORCEINLINE bool IsHurtable(const double currentTime) const { return (currentTime - lastHurtTime) > HURT_INTERVEL; }
+	FORCEINLINE bool IsHurtable(const double currentTime) const { return (currentTime - lastHurtTime) > HURT_INTERVAL; }
 };
 
 struct FAttackResult {
@@ -70,7 +50,7 @@ class KNIGHT_API IReactToAttack {
 	GENERATED_BODY()
 
 public:
-	virtual FAttackResult ReactToAttack(const FAttackReqeust& req) = 0;
+	virtual FAttackResult ReactToAttack(const FAttackRequest& req) = 0;
 };
 
 UINTERFACE()
@@ -109,4 +89,24 @@ class ITargetable {
 
 public:
 	virtual FVector GetTargetLocation() = 0;
+};
+
+class CombatUtils {
+	static constexpr float DIRECTIONAL_INPUT_DEADZONE = 0.2f;
+public:
+	FORCEINLINE static EAttackInputDirection GetAttackInputDirection(const FVector2d& direction) {
+		if (direction.X > DIRECTIONAL_INPUT_DEADZONE) return EAttackInputDirection::Right;
+		if (direction.X < -DIRECTIONAL_INPUT_DEADZONE) return EAttackInputDirection::Left;
+		if (direction.Y > DIRECTIONAL_INPUT_DEADZONE) return EAttackInputDirection::Up;
+		if (direction.Y < -DIRECTIONAL_INPUT_DEADZONE) return EAttackInputDirection::Down;
+		return EAttackInputDirection::Normal;
+	}
+
+	FORCEINLINE static EEvadeDirection GetEvadeDirection(const FVector2d& direction) {
+		if (direction.X > DIRECTIONAL_INPUT_DEADZONE) return EEvadeDirection::Right;
+		if (direction.X < -DIRECTIONAL_INPUT_DEADZONE) return EEvadeDirection::Left;
+		if (direction.Y > DIRECTIONAL_INPUT_DEADZONE) return EEvadeDirection::Forward;
+		if (direction.Y < -DIRECTIONAL_INPUT_DEADZONE) return EEvadeDirection::Backward;
+		return EEvadeDirection::None;
+	}
 };
