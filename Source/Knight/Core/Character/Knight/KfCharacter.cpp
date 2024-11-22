@@ -10,6 +10,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "CharacterTrajectoryComponent.h"
+#include "MotionWarpingComponent.h"
 #include "Knight/Core/Common.h"
 
 static const bool AKfCharacter_USE_MOVEMENT_COMPONENT = false;
@@ -29,7 +30,7 @@ AKfCharacter::AKfCharacter(const FObjectInitializer& initializer) {
 
 	_characterMovement = GetCharacterMovement();
 
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(USpringArmComponent::StaticClass()->GetFName(), false);
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(USpringArmComponent::StaticClass()->GetFName());
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 3000.0f;
 	CameraBoom->SocketOffset = FVector(0.f, 0.f, 800.f);
@@ -39,7 +40,7 @@ AKfCharacter::AKfCharacter(const FObjectInitializer& initializer) {
 	CameraBoom->CameraLagSpeed = 10.f;
 	CameraFreeLookSpeed = 1.f;
 
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(UCameraComponent::StaticClass()->GetFName(), false);
+	FollowCamera = CreateDefaultSubobject<UCameraComponent>(UCameraComponent::StaticClass()->GetFName());
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 
 	// Rotate the arm instead of the camera
@@ -55,11 +56,12 @@ AKfCharacter::AKfCharacter(const FObjectInitializer& initializer) {
 	_characterMovement->bUseControllerDesiredRotation = true; // will slowly rotate character to desired rotation, using RotationRate
 	_characterMovement->RotationRate = FRotator(0.0f, 225.0f, 0.0f);
 
-	_characterTrajectory = CreateDefaultSubobject<UCharacterTrajectoryComponent>(UCharacterTrajectoryComponent::StaticClass()->GetFName(), false);
+	_characterTrajectory = CreateDefaultSubobject<UCharacterTrajectoryComponent>(UCharacterTrajectoryComponent::StaticClass()->GetFName());
 
-	MeleeAttackComponent = CreateDefaultSubobject<UKfMeleeAttackComponent>(UKfMeleeAttackComponent::StaticClass()->GetFName(), false);
-	_targetComponent = CreateDefaultSubobject<UKfTargetComponent>(UKfTargetComponent::StaticClass()->GetFName(), false);
+	MeleeAttackComponent = CreateDefaultSubobject<UKfMeleeAttackComponent>(UKfMeleeAttackComponent::StaticClass()->GetFName());
+	_targetComponent = CreateDefaultSubobject<UKfTargetComponent>(UKfTargetComponent::StaticClass()->GetFName());
 
+	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(UMotionWarpingComponent::StaticClass()->GetFName());
 	_thirdPersonCameraBoomState.springArmState.socketOffset = FVector(0, 700, 550);
 	_thirdPersonCameraBoomState.springArmState.targetArmLength = 2000.f;
 	_thirdPersonCameraBoomState.springArmState.interpSpeed = 10.f;
@@ -232,7 +234,15 @@ void AKfCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) {
 }
 
 void AKfCharacter::OnAttackInput() {
-	//if (MeleeAttackComponent) MeleeAttackComponent->DoMeleeAttack();
+	/*if (MotionWarpingComponent && _targetComponent) {
+		const FName attackWrapTargetName = "target";
+		if (_targetComponent->hasTarget()) {
+			MotionWarpingComponent->AddOrUpdateWarpTargetFromLocation(attackWrapTargetName, _targetComponent->GetTargetLocation());
+		} else {
+			MotionWarpingComponent->RemoveWarpTarget(attackWrapTargetName);
+		}
+	}*/
+
 	if (MeleeAttackComponent) MeleeAttackComponent->DoMeleeAttack_Directional(_lastMoveInput);
 }
 

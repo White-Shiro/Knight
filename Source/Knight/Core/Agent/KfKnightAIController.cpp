@@ -2,6 +2,7 @@
 
 AKfKnightAIController::AKfKnightAIController() {
 	PrimaryActorTick.bCanEverTick = true;
+	bStartAILogicOnPossess = true;
 }
 
 void AKfKnightAIController::BeginPlay() {

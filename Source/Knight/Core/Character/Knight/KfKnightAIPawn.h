@@ -15,12 +15,15 @@ public:
 	FORCEINLINE class UKfMeleeAttackComponent* GetMeleeAttackComponent() const { return MeleeAttackComponent; }
 
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category = "AI", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<class UPathFollowingComponent> PathFollowingComponent;
 
 	// Behaviour Tree
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category = "AI", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<class UBehaviorTreeComponent> BehaviorTree;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<class UBlackboardComponent> Blackboard;
 
 	UPROPERTY()
 	TObjectPtr<class UKfCharacterAnimInstance> _animInstance;

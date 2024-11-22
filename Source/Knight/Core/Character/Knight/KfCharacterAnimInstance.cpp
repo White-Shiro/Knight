@@ -12,31 +12,16 @@ void UKfCharacterAnimInstance::NativeInitializeAnimation() {
 	aMoveDirection = FVector2f::ZeroVector;
 	_lastMoveInput = FVector2d::ZeroVector;
 
-	// test
-
-	if (_knightCh) {
-		UC_MSG("Knight Character Found");
-	}
-
-	if (!_knightCh) {
-		UC_LOG_ERROR_MSG("Knight Character Not Found");
-	}
-
 	_knightCh = Cast<AKfCharacter>(TryGetPawnOwner());
 
 	if (_knightCh) {
-		UC_MSG("Knight Character Found");
-	}
-
-	if (_knightCh.Get()) {
-		UC_MSG("Knight Character Found Get");
 		characterTrajectory = _knightCh->GetCharacterTrajectory();
 	}
 }
 
 void UKfCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds) {
 	Super::NativeUpdateAnimation(DeltaSeconds);
-	if (!_knightCh.Get()) return;
+	if (!_knightCh) return;
 
 	// const auto worldVel = _knightCh->GetVelocity();
 	// const auto localInputV = _knightCh->GetLocalInputVector();
@@ -45,16 +30,13 @@ void UKfCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds) {
 	// SyncWalkPlaySpeed(worldVel, localInputV, meshScale);
 
 	aIsWalking = _lastMoveInput != FVector2d::ZeroVector;
-
-	if (aIsWalking) {
-		SetWalkBlendSpaceDirection2D(_lastMoveInput);
-	}
+	SetWalkBlendSpaceDirection2D(_lastMoveInput);
 
 	UC_LOG_MSG_CONDITIONAL(logDirAndSpeed, "DIR: %s | SPD: %f", *aMoveDirection.ToString(), aMoveAnimPlaySpeed);
 }
 
-void UKfCharacterAnimInstance::SyncWalkPlaySpeed(const FVector& worldVel, const FVector& localInputV, const float meshScale) {
-	constexpr float animWalkMotionVelMag = 313.655f / 1.0f; // Root Motion Distance / Animation Length
+void UKfCharacterAnimInstance::SyncWalkPlaySpeed(const FVector& worldVel, const FVector& localInputV, float meshScale) {
+	constexpr float animWalkMotionVelMag = 313.655f / 1.0f; // Root Motion Distance / Animation Length in Sec
 	constexpr float animBackWalkMotionVelMag = 131.86f / 1.8f;
 
 	const float animVelMag = localInputV.X > -0.1f ? animWalkMotionVelMag : animBackWalkMotionVelMag;

@@ -28,6 +28,7 @@ public class Knight : ModuleRules
 			"AIModule",
 			"NavigationSystem",
 			"GameplayTasks",
+			"MotionWarping"
 		});
 
 		// Uncomment if you are using Slate UI
