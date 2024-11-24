@@ -1,5 +1,5 @@
 ﻿#include "HitDetectionNotifyState.h"
-#include "CombatCommon.h"
+#include "Combat.h"
 
 static constexpr int MIN_SEQUENCE_ID = -100000;
 static constexpr int MAX_SEQUENCE_ID = 100000;

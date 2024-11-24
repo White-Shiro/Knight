@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "CombatCommon.generated.h"
+#include "Combat.generated.h"
 
 UENUM()
 enum class EEvadeDirection {

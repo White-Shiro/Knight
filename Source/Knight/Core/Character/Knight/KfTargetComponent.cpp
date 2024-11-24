@@ -1,9 +1,9 @@
 ﻿#include "KfTargetComponent.h"
 
-#include "KfCharacter.h"
+#include "KfKnightCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Knight/Core/Common.h"
-#include "Knight/Core/Combat/CombatCommon.h"
+#include "Knight/Core/Core.h"
+#include "Knight/Core/Combat/Combat.h"
 #include "Knight/Core/Math/KfVectorUtils.h"
 
 UKfTargetComponent::UKfTargetComponent() {
@@ -24,7 +24,7 @@ void UKfTargetComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 void UKfTargetComponent::UpdateCtrlCamera(float dt) {
 	if(!_target.Get()) return;
 
-	const auto owner = Cast<AKfCharacter>(GetOwner());
+	const auto owner = Cast<AKfKnightCharacter>(GetOwner());
 	const auto targetLoc = _target->GetTargetLocation();
 	const auto selfLoc = owner->GetActorLocation();
 
@@ -95,7 +95,7 @@ bool UKfTargetComponent::ScanTarget() {
 	const bool hasTarget = _target.IsValid();
 
 	if (hasTarget) {
-		if (const auto* ch = AKfCharacter::CastFrom(owner)) { }
+		if (const auto* ch = AKfKnightCharacter::CastFrom(owner)) { }
 		UC_MSG("Target Acquired");
 	}
 
@@ -131,7 +131,7 @@ void UKfTargetComponent::CalcCamera(float DeltaTime, UCameraComponent* camera, c
 
 	if (!camera) return;
 	if (!springArmConfig) return;
-	const auto owner = Cast<AKfCharacter>(GetOwner());
+	const auto owner = Cast<AKfKnightCharacter>(GetOwner());
 	if (!owner) return;
 
 	const auto pc = owner->GetInstigatorController();
@@ -207,7 +207,7 @@ void UKfTargetComponent::CalcCamera(float DeltaTime, UCameraComponent* camera, c
 
 void UKfTargetComponent::DebugLockState(const FMinimalViewInfo& outResult) const {
 	if (!hasTarget()) return;
-	const auto owner = Cast<AKfCharacter>(GetOwner());
+	const auto owner = Cast<AKfKnightCharacter>(GetOwner());
 	const auto targetLoc = _target->GetTargetLocation();
 	const auto selfLoc = owner->GetActorLocation();
 	const auto* world = GetWorld();

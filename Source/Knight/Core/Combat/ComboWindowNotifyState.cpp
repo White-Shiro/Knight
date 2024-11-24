@@ -1,5 +1,5 @@
 ﻿#include "ComboWindowNotifyState.h"
-#include "CombatCommon.h"
+#include "Combat.h"
 
 UComboWindowNotifyState::UComboWindowNotifyState() {
 	isBeginAllowed = true;

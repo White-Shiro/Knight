@@ -4,8 +4,8 @@
 #include "Animation/AnimInstance.h"
 #include "Knight/Core/Audio/SoundRequest.h"
 #include "Knight/Core/Effect/VFXRequest.h"
-#include "Knight/Core/Character/Animation/KfFootStepAnimNotify.h"
-#include "Knight/Core/Combat/CombatCommon.h"
+#include "Knight/Core/Animation/KfFootStepAnimNotify.h"
+#include "Knight/Core/Combat/Combat.h"
 #include "KfCharacterAnimInstance.generated.h"
 
 class UAnimMontage;
@@ -102,7 +102,7 @@ public:
 private:
 	static constexpr float WALK_BLENDSPACE_AXIS_SCALE = 100.f;
 
-	TObjectPtr<class AKfCharacter> _knightCh;
+	TObjectPtr<class AKfKnightCharacter> _knightCh;
 	FVector2D _lastMoveInput;
 
 	enum class EWalkDirection {

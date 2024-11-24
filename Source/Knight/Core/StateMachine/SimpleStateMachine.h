@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "Knight/Core/Common.h"
+#include "Knight/Core/Core.h"
 
 //#define LOG_STATE
 

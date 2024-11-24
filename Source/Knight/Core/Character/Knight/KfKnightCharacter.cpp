@@ -1,4 +1,4 @@
-﻿#include "KfCharacter.h"
+﻿#include "KfKnightCharacter.h"
 
 #include "EnhancedInputComponent.h"
 #include "KfCharacterAnimInstance.h"
@@ -11,11 +11,11 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "CharacterTrajectoryComponent.h"
 #include "MotionWarpingComponent.h"
-#include "Knight/Core/Common.h"
+#include "Knight/Core/Core.h"
 
 static const bool AKfCharacter_USE_MOVEMENT_COMPONENT = false;
 
-AKfCharacter::AKfCharacter(const FObjectInitializer& initializer) {
+AKfKnightCharacter::AKfKnightCharacter(const FObjectInitializer& initializer) {
 	PrimaryActorTick.bCanEverTick = true;
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorld;
@@ -73,19 +73,19 @@ AKfCharacter::AKfCharacter(const FObjectInitializer& initializer) {
 	_lastMoveInput = FVector2D::ZeroVector;
 }
 
-void AKfCharacter::BeginPlay() {
+void AKfKnightCharacter::BeginPlay() {
 	Super::BeginPlay();
 	_animInstance = Cast<UKfCharacterAnimInstance>(GetMesh()->GetAnimInstance());
 	SetCameraBoomConfig(&_thirdPersonCameraBoomState);
 }
 
-void AKfCharacter::Tick(float DeltaTime) {
+void AKfKnightCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 	ConsumeMovementInput();
 }
 
-void AKfCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
-	using This = AKfCharacter;
+void AKfKnightCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
+	using This = AKfKnightCharacter;
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	auto* enInput = Cast<UEnhancedInputComponent>(PlayerInputComponent);
@@ -132,17 +132,17 @@ void AKfCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 }
 
-void AKfCharacter::AddMovementInput(const FVector WorldDirection, float ScaleValue, bool bForce) {
+void AKfKnightCharacter::AddMovementInput(const FVector WorldDirection, float ScaleValue, bool bForce) {
 	Super::AddMovementInput(WorldDirection, ScaleValue, bForce);
 }
 
-FVector AKfCharacter::GetLocalInputVector() const {
+FVector AKfKnightCharacter::GetLocalInputVector() const {
 	const auto worldVel = GetVelocity();
 	const auto localVel = ActorToWorld().InverseTransformVectorNoScale(worldVel);
 	return localVel;
 }
 
-FAttackResult AKfCharacter::ReactToAttack(const FAttackRequest& req) {
+FAttackResult AKfKnightCharacter::ReactToAttack(const FAttackRequest& req) {
 	const double currentTime = GetWorld()->GetTimeSeconds();
 	if (!_hurtHistory.IsHurtable(currentTime)) {
 		return FAttackResult(false);
@@ -153,25 +153,25 @@ FAttackResult AKfCharacter::ReactToAttack(const FAttackRequest& req) {
 	return FAttackResult(true);
 }
 
-void AKfCharacter::ReactToAnimHitDetection(float frameDeltaTime, const UHitDetectionNotifyParam& payload) {
+void AKfKnightCharacter::ReactToAnimHitDetection(float frameDeltaTime, const UHitDetectionNotifyParam& payload) {
 	if (MeleeAttackComponent) MeleeAttackComponent->HandleAnimHitDetection(frameDeltaTime, payload);
 }
 
-void AKfCharacter::ReactToComboWindowNotifyState(bool isBegin, bool isEnd, bool isComboAllowed) {
+void AKfKnightCharacter::ReactToComboWindowNotifyState(bool isBegin, bool isEnd, bool isComboAllowed) {
 	SetCharacterOrientToCamera(isComboAllowed);
 	if (MeleeAttackComponent) MeleeAttackComponent->SetAllowCombo(isComboAllowed);
 }
 
-void AKfCharacter::ReactToComboWindowNotifyState_ResetComboSequence() {
+void AKfKnightCharacter::ReactToComboWindowNotifyState_ResetComboSequence() {
 	SetCharacterOrientToCamera(true);
 	if (MeleeAttackComponent) MeleeAttackComponent->ResetAttackSequence();
 }
 
-FVector AKfCharacter::GetTargetLocation() {
+FVector AKfKnightCharacter::GetTargetLocation() {
 	return GetActorLocation() + GetActorUpVector() * 500.f;
 }
 
-void AKfCharacter::OnMoveInput(const FInputActionValue& Value) {
+void AKfKnightCharacter::OnMoveInput(const FInputActionValue& Value) {
 	_lastMoveInput += Value.Get<FVector2D>();
 
 	if (AKfCharacter_USE_MOVEMENT_COMPONENT) {
@@ -179,50 +179,50 @@ void AKfCharacter::OnMoveInput(const FInputActionValue& Value) {
 	}
 }
 
-void AKfCharacter::OnLookInput(const FInputActionValue& Value) {
+void AKfKnightCharacter::OnLookInput(const FInputActionValue& Value) {
 	KfCharacterCommon::HandleLookInput(Value, this, _cameraRotationState, CameraFreeLookSpeed);
 }
 
-void AKfCharacter::OnJumpInput(const FInputActionValue& Value) {
+void AKfKnightCharacter::OnJumpInput(const FInputActionValue& Value) {
 	_animInstance->PlayEvadeMontage(EEvadeDirection::Forward);
 	MeleeAttackComponent->ResetAttackSequence();
 }
 
-void AKfCharacter::OnEvadeInput(const FInputActionValue& Value) {
+void AKfKnightCharacter::OnEvadeInput(const FInputActionValue& Value) {
 	_animInstance->PlayEvadeMontage(EEvadeDirection::Backward);
 	MeleeAttackComponent->ResetAttackSequence();
 }
 
-void AKfCharacter::OnStopJumpInput(const FInputActionValue& Value) {}
+void AKfKnightCharacter::OnStopJumpInput(const FInputActionValue& Value) {}
 
-void AKfCharacter::OnSprintInput(const FInputActionValue& Value) { _animInstance->aIsSprinting = true; }
+void AKfKnightCharacter::OnSprintInput(const FInputActionValue& Value) { _animInstance->aIsSprinting = true; }
 
-void AKfCharacter::OnStopSprintInput(const FInputActionValue& Value) { _animInstance->aIsSprinting = false; }
+void AKfKnightCharacter::OnStopSprintInput(const FInputActionValue& Value) { _animInstance->aIsSprinting = false; }
 
-void AKfCharacter::OnToggleCombatStateInput(const FInputActionValue& Value) {}
+void AKfKnightCharacter::OnToggleCombatStateInput(const FInputActionValue& Value) {}
 
-void AKfCharacter::OnLockTargetInput(const FInputActionValue& Value) {
+void AKfKnightCharacter::OnLockTargetInput(const FInputActionValue& Value) {
 	if (!_targetComponent) return;
 	const bool hasTarget = _targetComponent->ToggleTargetMode();
 	SetCameraBoomConfig(hasTarget ? &_lockModeCameraBoomState : &_thirdPersonCameraBoomState);
 }
 
-void AKfCharacter::OnUpdateCamera(float deltaTime) {
+void AKfKnightCharacter::OnUpdateCamera(float deltaTime) {
 	if (_currentSpringArmConfig) _currentSpringArmConfig->springArmState.InterpPosition(CameraBoom, deltaTime);
 }
 
-void AKfCharacter::SetCameraBoomConfig(FCameraConfig* config) {
+void AKfKnightCharacter::SetCameraBoomConfig(FCameraConfig* config) {
 	_currentSpringArmConfig = config;
 	if (config) config->springArmState.ApplyBool(CameraBoom);
 }
 
-void AKfCharacter::SetCharacterOrientToCamera(bool shouldOrient) {
+void AKfKnightCharacter::SetCharacterOrientToCamera(bool shouldOrient) {
 	if (_characterMovement) {
 		_characterMovement->bUseControllerDesiredRotation = shouldOrient;
 	}
 }
 
-void AKfCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) {
+void AKfKnightCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) {
 	OnUpdateCamera(DeltaTime);
 #if 0
 	if (_targetComponent && _targetComponent->hasTarget()) {
@@ -233,7 +233,7 @@ void AKfCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) {
 	Super::CalcCamera(DeltaTime, OutResult);
 }
 
-void AKfCharacter::OnAttackInput() {
+void AKfKnightCharacter::OnAttackInput() {
 	/*if (MotionWarpingComponent && _targetComponent) {
 		const FName attackWrapTargetName = "target";
 		if (_targetComponent->hasTarget()) {
@@ -246,11 +246,11 @@ void AKfCharacter::OnAttackInput() {
 	if (MeleeAttackComponent) MeleeAttackComponent->DoMeleeAttack_Directional(_lastMoveInput);
 }
 
-void AKfCharacter::OnHeavyAttackInput() {
+void AKfKnightCharacter::OnHeavyAttackInput() {
 	if (MeleeAttackComponent) MeleeAttackComponent->DoMeleeAttack_Heavy();
 }
 
-void AKfCharacter::ConsumeMovementInput() {
+void AKfKnightCharacter::ConsumeMovementInput() {
 	_animInstance->SetMovementInput(_lastMoveInput);
 	_lastMoveInput = FVector2D::ZeroVector;
 }

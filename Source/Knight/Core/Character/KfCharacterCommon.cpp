@@ -3,7 +3,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Knight/Core/Common.h"
+#include "Knight/Core/Core.h"
 
 #define IA_FIND_PATH(AssetName) TEXT("/Script/EnhancedInput.InputAction'/Game/Core/Config/Input/" AssetName "." AssetName "'");
 

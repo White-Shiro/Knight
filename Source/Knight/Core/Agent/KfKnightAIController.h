@@ -6,17 +6,19 @@
 
 UCLASS()
 class KNIGHT_API AKfKnightAIController : public AAIController {
+
+
+private:
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
 	AKfKnightAIController();
-
+	virtual void Tick(float DeltaTime) override;
 protected:
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void OnUnPossess() override;
 };
+

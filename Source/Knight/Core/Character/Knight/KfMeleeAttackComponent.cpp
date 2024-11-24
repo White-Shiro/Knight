@@ -1,7 +1,7 @@
 ﻿#include "KfMeleeAttackComponent.h"
 #include "KfCharacterAnimInstance.h"
-#include "Knight/Core/Common.h"
-#include "Knight/Core/Combat/CombatCommon.h"
+#include "Knight/Core/Core.h"
+#include "Knight/Core/Combat/Combat.h"
 #include "Knight/Core/Combat/HitDetectionNotifyState.h"
 
 UKfMeleeAttackComponent::UKfMeleeAttackComponent() {

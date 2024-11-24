@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotifyState.h"
-#include "CombatCommon.h"
+#include "Combat.h"
 #include "HitDetectionNotifyState.generated.h"
 
 struct UHitDetectionNotifyParam {

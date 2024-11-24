@@ -11,7 +11,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
 
-	TWeakObjectPtr<class AKfCharacter> _currentKnightFrame;
+	TWeakObjectPtr<class AKfKnightCharacter> _currentKnightFrame;
 
 public:
 	AKfPlayerController();

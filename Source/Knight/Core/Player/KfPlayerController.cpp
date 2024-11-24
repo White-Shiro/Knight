@@ -1,9 +1,9 @@
 ﻿#include "KfPlayerController.h"
 #include "InputMappingContext.h"
 #include "EnhancedInputSubsystems.h"
-#include "Knight/Core/Common.h"
-#include "Knight/Core/Character/Camera/KfCameraManager.h"
-#include "Knight/Core/Character/Knight/KfCharacter.h"
+#include "Knight/Core/Core.h"
+#include "Knight/Core/Camera/KfCameraManager.h"
+#include "Knight/Core/Character/Knight/KfKnightCharacter.h"
 
 AKfPlayerController::AKfPlayerController() {
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> Finder = TEXT("/Script/EnhancedInput.InputMappingContext'/Game/Core/Config/Input/IMC_KnightGame.IMC_KnightGame'");
@@ -38,11 +38,5 @@ void AKfPlayerController::BeginPlay() {
 
 void AKfPlayerController::OnPossess(APawn* InPawn) {
 	Super::OnPossess(InPawn);
-
-	_currentKnightFrame = Cast<AKfCharacter>(InPawn);
-	if (_currentKnightFrame.Get()) {
-		KF_LOG_MESSAGE_FMT("Pilot Valid");
-	} else {
-		KF_LOG_MESSAGE_FMT("Who is this?");
-	}
+	_currentKnightFrame = Cast<AKfKnightCharacter>(InPawn);
 }

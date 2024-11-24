@@ -5,6 +5,12 @@
 
 UCLASS()
 class AKfKnightAIPawn : public ACharacter {
+public:
+	virtual void Tick(float DeltaSeconds) override;
+
+	virtual void AddMovementInput(FVector WorldDirection, float ScaleValue, bool bForce) override;
+
+private:
 	GENERATED_BODY()
 
 public:
@@ -13,21 +19,24 @@ public:
 
 	UFUNCTION()
 	FORCEINLINE class UKfMeleeAttackComponent* GetMeleeAttackComponent() const { return MeleeAttackComponent; }
+	FORCEINLINE class UBehaviorTree* GetBehaviorTree() const { return BehaviorTreeAsset; }
 
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta=(AllowPrivateAccess = "true"))
-	TObjectPtr<class UPathFollowingComponent> PathFollowingComponent;
 
+	FVector2d _lastMoveInput;
 	// Behaviour Tree
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<class UBehaviorTreeComponent> BehaviorTree;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta=(AllowPrivateAccess = "true"))
-	TObjectPtr<class UBlackboardComponent> Blackboard;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<class UBehaviorTree> BehaviorTreeAsset;
 
 	UPROPERTY()
 	TObjectPtr<class UKfCharacterAnimInstance> _animInstance;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = "true"))
 	class UKfMeleeAttackComponent* MeleeAttackComponent;
+
+protected:
+	void ConsumeMovementInput();
 };

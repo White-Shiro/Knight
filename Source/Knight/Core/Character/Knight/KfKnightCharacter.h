@@ -4,11 +4,11 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"
 #include "Knight/Core/Character/KfCharacterCommon.h"
-#include "Knight/Core/Combat/CombatCommon.h"
-#include "KfCharacter.generated.h"
+#include "Knight/Core/Combat/Combat.h"
+#include "KfKnightCharacter.generated.h"
 
 UCLASS()
-class KNIGHT_API AKfCharacter final : public ACharacter,
+class KNIGHT_API AKfKnightCharacter final : public ACharacter,
                                       public ITargetable,
                                       public IReactToAttack,
                                       public IReactToAnimHitDectectNotifyState,
@@ -59,7 +59,7 @@ private:
 	FHurtHistory _hurtHistory;
 
 public:
-	AKfCharacter(const FObjectInitializer& initializer = FObjectInitializer::Get());
+	AKfKnightCharacter(const FObjectInitializer& initializer = FObjectInitializer::Get());
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -98,5 +98,5 @@ protected:
 	void SetCharacterOrientToCamera(bool shouldOrient);
 
 public:
-	FORCEINLINE static AKfCharacter* CastFrom(AActor* actor) { return Cast<AKfCharacter>(actor); }
+	FORCEINLINE static AKfKnightCharacter* CastFrom(AActor* actor) { return Cast<AKfKnightCharacter>(actor); }
 };

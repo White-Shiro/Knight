@@ -4,7 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "Knight/Core/Audio/SoundRequest.h"
 #include "Knight/Core/Effect/VFXRequest.h"
-#include "Knight/Core/Combat/CombatCommon.h"
+#include "Knight/Core/Combat/Combat.h"
 #include "KfMeleeAttackComponent.generated.h"
 
 USTRUCT(BlueprintType)

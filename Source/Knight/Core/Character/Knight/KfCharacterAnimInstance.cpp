@@ -1,6 +1,6 @@
 ﻿#include "KfCharacterAnimInstance.h"
-#include "KfCharacter.h"
-#include "Knight/Core/Common.h"
+#include "KfKnightCharacter.h"
+#include "Knight/Core/Core.h"
 
 void UKfCharacterAnimInstance::NativeBeginPlay() {
 	Super::NativeBeginPlay();
@@ -12,7 +12,7 @@ void UKfCharacterAnimInstance::NativeInitializeAnimation() {
 	aMoveDirection = FVector2f::ZeroVector;
 	_lastMoveInput = FVector2d::ZeroVector;
 
-	_knightCh = Cast<AKfCharacter>(TryGetPawnOwner());
+	_knightCh = Cast<AKfKnightCharacter>(TryGetPawnOwner());
 
 	if (_knightCh) {
 		characterTrajectory = _knightCh->GetCharacterTrajectory();
@@ -20,9 +20,7 @@ void UKfCharacterAnimInstance::NativeInitializeAnimation() {
 }
 
 void UKfCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds) {
-	Super::NativeUpdateAnimation(DeltaSeconds);
-	if (!_knightCh) return;
-
+	// if (!_knightCh) return;
 	// const auto worldVel = _knightCh->GetVelocity();
 	// const auto localInputV = _knightCh->GetLocalInputVector();
 	// const float meshScale =  _knightCh->GetMesh()->GetComponentScale().X;
@@ -31,7 +29,6 @@ void UKfCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds) {
 
 	aIsWalking = _lastMoveInput != FVector2d::ZeroVector;
 	SetWalkBlendSpaceDirection2D(_lastMoveInput);
-
 	UC_LOG_MSG_CONDITIONAL(logDirAndSpeed, "DIR: %s | SPD: %f", *aMoveDirection.ToString(), aMoveAnimPlaySpeed);
 }
 
