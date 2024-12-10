@@ -34,6 +34,6 @@ A 3 Band Lit Cell Shading that support Texture Map Input and Emisive map, dynami
 
 Outline is done via Screen Post Processing, using depth and normal edge detection
 
-
-
 [![Video](https://img.youtube.com/vi/cpqtP247Z8M/maxresdefault.jpg)](https://www.youtube.com/watch?v=cpqtP247Z8M)
+
+![image](https://github.com/user-attachments/assets/c10a10dd-c38c-4c3b-99f9-edc190ded988)
