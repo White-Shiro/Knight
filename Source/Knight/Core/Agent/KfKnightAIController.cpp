@@ -1,7 +1,5 @@
 ﻿#include "KfKnightAIController.h"
-#include "NavigationSystem.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Knight/Core/Core.h"
 #include "Knight/Core/Character/Knight/KfKnightAIPawn.h"
 
 AKfKnightAIController::AKfKnightAIController() {

@@ -1,5 +1,4 @@
 ﻿#include "KfKnightCharacter.h"
-
 #include "EnhancedInputComponent.h"
 #include "KfCharacterAnimInstance.h"
 #include "KfMeleeAttackComponent.h"
@@ -11,7 +10,6 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "CharacterTrajectoryComponent.h"
 #include "MotionWarpingComponent.h"
-#include "Knight/Core/Core.h"
 
 static const bool AKfCharacter_USE_MOVEMENT_COMPONENT = false;
 

@@ -1,6 +1,4 @@
 ﻿#include "KfKnightMovementComponent.h"
-#include "KfKnightAIPawn.h"
-#include "Knight/Core/Logger.h"
 
 void UKfKnightMovementComponent::OnRegister() {
 	Super::OnRegister();

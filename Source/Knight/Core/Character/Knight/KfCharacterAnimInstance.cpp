@@ -97,10 +97,9 @@ float UKfCharacterAnimInstance::PlayMeleeMontage(int32 montageIndex) {
 		default: break;
 	}
 
-	float length = 0.0f;
-
-	if (montage) length = Montage_Play(montage);
-	return length;
+	float duration = 0.f;
+	if (montage) duration = Montage_Play(montage, 1, EMontagePlayReturnType::Duration, 0.0f, true);
+	return duration;
 }
 
 float UKfCharacterAnimInstance::PlayMeleeMontage_Directional(const EAttackInputDirection atkDir) {
@@ -115,9 +114,9 @@ float UKfCharacterAnimInstance::PlayMeleeMontage_Directional(const EAttackInputD
 		case EAttackInputDirection::Down:   montage = animSet.attackMontage_NA_Down;   break;
 	}
 
-	float length = 0.f;
-	if (montage) length = Montage_Play(montage);
-	return length;
+	float duration = 0.f;
+	if (montage) duration = Montage_Play(montage, 1, EMontagePlayReturnType::Duration, 0.0f, true);
+	return duration;
 }
 
 void UKfCharacterAnimInstance::PlayHurtMontage() {
