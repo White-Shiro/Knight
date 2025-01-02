@@ -12,6 +12,15 @@ struct FSwordHitEffectSet {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, Category = "Hit Effect")
+	bool bUseHitStop = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hit Effect", meta = (EditCondition = "bUseHitStop", EditConditionHides, ClampMin = "0.001"))
+	float hitStopDuration = 0.005f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hit Effect", meta = (EditCondition = "bUseHitStop", EditConditionHides, ClampMin = "0.001", ClampMax = "1.0"))
+	float hitStopTimeScale = 0.05f;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Effect")
 	FVFXRequest hitEffect_Pawn;
 
 	UPROPERTY(EditAnywhere, Category = "Hit Effect")
@@ -44,6 +53,8 @@ UCLASS(ClassGroup=(Knight), meta=(BlueprintSpawnableComponent))
 class KNIGHT_API UKfMeleeAttackComponent : public UActorComponent {
 	GENERATED_BODY()
 
+	UKfMeleeAttackComponent();
+
 	UPROPERTY()
 	TObjectPtr<class UKfCharacterAnimInstance> _animInstance = nullptr;
 
@@ -55,9 +66,6 @@ class KNIGHT_API UKfMeleeAttackComponent : public UActorComponent {
 
 	UPROPERTY(EditAnywhere, Category = "Melee State")
 	FMeleeSequenceState _meleeSequenceState;
-
-public:
-	UKfMeleeAttackComponent();
 
 	UPROPERTY(EditAnywhere, Category = "Weapon")
 	float _hitBoxRadius = 50.0f;
@@ -71,6 +79,7 @@ public:
 	bool _fillHitDetectionGap = true;
 
 protected:
+
 	struct FTraceDirectionInfo {
 		FVector start;
 		FVector unitDirection;
@@ -78,28 +87,43 @@ protected:
 	};
 
 	FTraceDirectionInfo prevTraceDirection;
-	FTraceDelegate _traceDelegate;
-	FTraceHandle _traceHandle;
+	FTraceDelegate traceDelegate;
+	FTraceHandle traceHandle;
+
+	FTimerHandle hitStopTimerHandle;
 
 	virtual void BeginPlay() override;
 	virtual void OnAnimationInstanceInit(UKfCharacterAnimInstance* animInstance);
 
 	UFUNCTION()
 	virtual void OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
+
 	UFUNCTION()
 	virtual void OnMontageNotifyEnd(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
 
 	bool DoSwingHits(const struct UHitDetectionNotifyParam& param);
 	bool TrySwordHitOnce(const FVector& start, const FVector& direction, bool isSegment = false);
 	FTraceHandle TraceSwordHits(const FVector& start, const FVector& direction, float distance, float swordRad, bool isSegment = false) const;
-	void OnSwordHitResult(const FHitResult& hitResult) const;
-	virtual void onTraceCompleted(const FTraceHandle& handle, FTraceDatum& data);
+	void OnSwordHitResult(const FHitResult& hitResult);
+	virtual void OnTraceCompleted(const FTraceHandle& handle, FTraceDatum& data);
+	virtual void ScheduleHitStop(float duration, float timeScale);
 
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	FORCEINLINE void SetHitBoxRadius(float radius) { _hitBoxRadius = radius; }
+	FORCEINLINE void SetHitBoxLength(float length) { _hitBoxLength = length; }
+
+	UFUNCTION()
 	void DoMeleeAttack();
-	void DoMeleeAttack_Directional(const FVector2d& movementInput);
+
+	UFUNCTION()
+
+	bool DoMeleeAttack_Directional_FromVector2(const FVector2f& movementInput, float& outDuration);
+	UFUNCTION()
+	bool DoMeleeAttack_Directional(EAttackInputDirection meleeDirection, float& outDuration);
+
+	UFUNCTION()
 	void DoMeleeAttack_Heavy();
 	void HandleAnimHitDetection(float frameDt, const struct UHitDetectionNotifyParam& param);
 

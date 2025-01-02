@@ -5,11 +5,22 @@ void UKfKnightMovementComponent::OnRegister() {
 }
 
 void UKfKnightMovementComponent::RequestPathMove(const FVector& MoveInput) {
-	if (PawnOwner) PawnOwner->AddMovementInput(MoveInput, 1.f, true);
+	RequestDirectMove(MoveInput, false);
 }
 
 void UKfKnightMovementComponent::RequestDirectMove(const FVector& MoveVelocity, bool bForceMaxSpeed) {
-	if (PawnOwner) PawnOwner->AddMovementInput(MoveVelocity, 1.f, true);
+	if (!IsValid(PawnOwner)) return;
+
+	if (bOrientRotationToMovement) {
+		const auto currentFacing = PawnOwner->GetActorForwardVector().GetSafeNormal2D();
+		const auto moveDir = MoveVelocity.GetSafeNormal2D();
+		FRotator newFacing = FRotator::ZeroRotator;
+		const auto deltaRot = GetDeltaRotation(GetWorld()->GetDeltaSeconds());
+		newFacing.Yaw = FMath::FixedTurn(currentFacing.Rotation().Yaw, moveDir.Rotation().Yaw, deltaRot.Yaw);
+		PawnOwner->SetActorRotation(newFacing);
+	}
+
+	PawnOwner->AddMovementInput(MoveVelocity, 1.f, true);
 }
 
 UKfKnightMovementComponent::UKfKnightMovementComponent() {
@@ -22,6 +33,5 @@ void UKfKnightMovementComponent::BeginPlay() {
 
 void UKfKnightMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
 }
 

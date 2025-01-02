@@ -22,6 +22,48 @@ enum class EAttackInputDirection {
 	Right,
 };
 
+USTRUCT(BlueprintType)
+struct FHitStop {
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	bool bIsEnabled = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bIsEnabled", EditConditionHides, ClampMin = "0.01"))
+	float hitStopDuration = 0.1f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bIsEnabled", EditConditionHides, ClampMin = "0.0", ClampMax = "1.0"))
+	float hitStopTimeScale = 0.05f;
+};
+
+USTRUCT(BlueprintType)
+struct FHitFeedBackDefinition {
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FHitStop hitStopOnHit;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FHitStop hitStopOnBlock;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UCameraShakeBase> cameraShakeClass;
+};
+
+USTRUCT(BlueprintType)
+struct FCombatEffectRequest {
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FHitFeedBackDefinition hitFeedback;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FVFXRequest vfxRequest;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FSoundRequest soundRequest;
+};
+
 struct FAttackRequest {
 	float damage = 0;
 };
@@ -94,7 +136,7 @@ public:
 class CombatUtils {
 	static constexpr float DIRECTIONAL_INPUT_DEADZONE = 0.2f;
 public:
-	FORCEINLINE static EAttackInputDirection GetAttackInputDirection(const FVector2d& direction) {
+	FORCEINLINE static EAttackInputDirection GetAttackInputDirection(const FVector2f& direction) {
 		if (direction.X > DIRECTIONAL_INPUT_DEADZONE) return EAttackInputDirection::Right;
 		if (direction.X < -DIRECTIONAL_INPUT_DEADZONE) return EAttackInputDirection::Left;
 		if (direction.Y > DIRECTIONAL_INPUT_DEADZONE) return EAttackInputDirection::Up;
@@ -102,7 +144,7 @@ public:
 		return EAttackInputDirection::Normal;
 	}
 
-	FORCEINLINE static EEvadeDirection GetEvadeDirection(const FVector2d& direction) {
+	FORCEINLINE static EEvadeDirection GetEvadeDirection(const FVector2f& direction) {
 		if (direction.X > DIRECTIONAL_INPUT_DEADZONE) return EEvadeDirection::Right;
 		if (direction.X < -DIRECTIONAL_INPUT_DEADZONE) return EEvadeDirection::Left;
 		if (direction.Y > DIRECTIONAL_INPUT_DEADZONE) return EEvadeDirection::Forward;

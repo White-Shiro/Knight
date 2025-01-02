@@ -54,7 +54,7 @@ private:
 	TObjectPtr<class UCharacterTrajectoryComponent> _characterTrajectory;
 
 	FCameraRotationState _cameraRotationState;
-	FVector2d _lastMoveInput;
+	FVector2f _lastMoveInput;
 	FCameraConfig* _currentSpringArmConfig = nullptr;
 	FHurtHistory _hurtHistory;
 
@@ -78,7 +78,7 @@ public:
 	virtual void ReactToComboWindowNotifyState_ResetComboSequence() override;
 	virtual void CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) override;
 
-	FORCEINLINE FVector2d GetLastMovementInput() const { return _lastMoveInput; }
+	FORCEINLINE FVector2f GetLastMovementInput() const { return _lastMoveInput; }
 
 protected:
 	void OnMoveInput(const FInputActionValue& Value);

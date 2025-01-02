@@ -10,7 +10,7 @@ void UKfCharacterAnimInstance::NativeInitializeAnimation() {
 	Super::NativeInitializeAnimation();
 	aMoveAnimPlaySpeed = 1.0f;
 	aMoveDirection = FVector2f::ZeroVector;
-	_lastMoveInput = FVector2d::ZeroVector;
+	_lastMoveInput = FVector2f::ZeroVector;
 
 	_knightCh = Cast<AKfKnightCharacter>(TryGetPawnOwner());
 
@@ -27,7 +27,7 @@ void UKfCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds) {
 	// SetWalkBlendspaceDirection1D(worldVel, _knightCh->GetMovementComponent()->GetMaxSpeed());
 	// SyncWalkPlaySpeed(worldVel, localInputV, meshScale);
 
-	aIsWalking = _lastMoveInput != FVector2d::ZeroVector;
+	aIsWalking = _lastMoveInput != FVector2f::ZeroVector;
 	SetWalkBlendSpaceDirection2D(_lastMoveInput);
 	UC_LOG_MSG_CONDITIONAL(logDirAndSpeed, "DIR: %s | SPD: %f", *aMoveDirection.ToString(), aMoveAnimPlaySpeed);
 }
@@ -42,7 +42,7 @@ void UKfCharacterAnimInstance::SyncWalkPlaySpeed(const FVector& worldVel, const 
 	aMoveAnimPlaySpeed = velocityMag > 0 ? playSpeed : 1;
 }
 
-void UKfCharacterAnimInstance::SetWalkBlendSpaceDirection2D(const FVector2d& localInputV) {
+void UKfCharacterAnimInstance::SetWalkBlendSpaceDirection2D(const FVector2f& localInputV) {
 	FVector2f calInputV2f(localInputV);
 
 	if (calInputV2f != FVector2f::ZeroVector) {
@@ -69,7 +69,7 @@ void UKfCharacterAnimInstance::SetWalkBlendSpaceDirection1D(const FVector& world
 	aMoveDirection.Y = ratio;
 }
 
-void UKfCharacterAnimInstance::SetMovementInput(const FVector2D& inputV) {
+void UKfCharacterAnimInstance::SetMovementInput(const FVector2f& inputV) {
 	_lastMoveInput = inputV;
 }
 

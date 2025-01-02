@@ -1,12 +1,12 @@
 ﻿#include "KfVectorUtils.h"
-bool KfVectorUtils::UnitDirectionAndSize(const FVector& vector, FVector& outDir, float& outSize) {
+bool KfVectorUtils::UnitDirectionAndSize(const FVector& vector, FVector& outUnitDirection, float& outSize) {
 	outSize = vector.Size();
 	if (FMath::IsNearlyZero(outSize)) {
-		outDir = FVector::ZeroVector;
+		outUnitDirection = FVector::ZeroVector;
 		return false;
 	}
 
-	outDir = vector / outSize;
+	outUnitDirection = vector / outSize;
 	return true;
 }
 

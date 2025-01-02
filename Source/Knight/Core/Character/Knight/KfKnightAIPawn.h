@@ -34,7 +34,7 @@ public:
 
 private:
 	FHurtHistory _hurtHistory;
-	FVector2d _lastMoveInput;
+	FVector2f _lastMoveInput;
 	// Behaviour Tree
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<class UBehaviorTreeComponent> BehaviorTree;
@@ -49,5 +49,13 @@ private:
 	class UKfMeleeAttackComponent* MeleeAttackComponent;
 
 protected:
+
+	UPROPERTY()
+	TObjectPtr<class UKfKnightMovementComponent> knightMovement;
+
 	void ConsumeMovementInput();
+	void LookAtTarget(float deltaTime);
+
+	UPROPERTY()
+	TObjectPtr<AActor> lastFocusActor;
 };

@@ -57,6 +57,9 @@ AKfKnightCharacter::AKfKnightCharacter(const FObjectInitializer& initializer) {
 	_characterTrajectory = CreateDefaultSubobject<UCharacterTrajectoryComponent>(UCharacterTrajectoryComponent::StaticClass()->GetFName());
 
 	MeleeAttackComponent = CreateDefaultSubobject<UKfMeleeAttackComponent>(UKfMeleeAttackComponent::StaticClass()->GetFName());
+	MeleeAttackComponent->SetHitBoxRadius(130.f);
+	MeleeAttackComponent->SetHitBoxLength(1500.f);
+
 	_targetComponent = CreateDefaultSubobject<UKfTargetComponent>(UKfTargetComponent::StaticClass()->GetFName());
 
 	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(UMotionWarpingComponent::StaticClass()->GetFName());
@@ -68,7 +71,7 @@ AKfKnightCharacter::AKfKnightCharacter(const FObjectInitializer& initializer) {
 	_lockModeCameraBoomState.springArmState.targetArmLength = 2000.f;
 	_lockModeCameraBoomState.springArmState.interpSpeed = 10.f;
 
-	_lastMoveInput = FVector2D::ZeroVector;
+	_lastMoveInput = FVector2f::ZeroVector;
 }
 
 void AKfKnightCharacter::BeginPlay() {
@@ -170,7 +173,8 @@ FVector AKfKnightCharacter::GetTargetLocation() {
 }
 
 void AKfKnightCharacter::OnMoveInput(const FInputActionValue& Value) {
-	_lastMoveInput += Value.Get<FVector2D>();
+	const auto v2d =  Value.Get<FVector2D>();
+	_lastMoveInput += FVector2f(v2d.X, v2d.Y);
 
 	if (AKfCharacter_USE_MOVEMENT_COMPONENT) {
 		KfCharacterCommon::HandleMoveInput_CameraBase(Value, this);
@@ -241,7 +245,8 @@ void AKfKnightCharacter::OnAttackInput() {
 		}
 	}*/
 
-	if (MeleeAttackComponent) MeleeAttackComponent->DoMeleeAttack_Directional(_lastMoveInput);
+	float duration;
+	if (MeleeAttackComponent) MeleeAttackComponent->DoMeleeAttack_Directional_FromVector2(_lastMoveInput, duration);
 }
 
 void AKfKnightCharacter::OnHeavyAttackInput() {
@@ -250,5 +255,5 @@ void AKfKnightCharacter::OnHeavyAttackInput() {
 
 void AKfKnightCharacter::ConsumeMovementInput() {
 	_animInstance->SetMovementInput(_lastMoveInput);
-	_lastMoveInput = FVector2D::ZeroVector;
+	_lastMoveInput = FVector2f::ZeroVector;
 }

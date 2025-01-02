@@ -1,5 +1,6 @@
 ﻿#include "KfKnightAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Knight/Core/Logger.h"
 #include "Knight/Core/Character/Knight/KfKnightAIPawn.h"
 
 AKfKnightAIController::AKfKnightAIController() {
@@ -20,6 +21,8 @@ void AKfKnightAIController::OnPossess(APawn* InPawn) {
 			if (auto* tree = knightAi->GetBehaviorTree()) {
 				RunBehaviorTree(tree);
 			}
+		} else {
+			UC_LOG_ERROR_MSG("AI Controller: %s is not a Knight AI Pawn", *InPawn->GetName());
 		}
 	}
 }

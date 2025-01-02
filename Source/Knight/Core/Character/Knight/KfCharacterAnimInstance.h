@@ -89,9 +89,9 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	void SyncWalkPlaySpeed(const FVector& worldVel, const FVector& localInputV, float meshScale);
-	void SetWalkBlendSpaceDirection2D(const FVector2d& localInputV);
+	void SetWalkBlendSpaceDirection2D(const FVector2f& localInputV);
 	void SetWalkBlendSpaceDirection1D(const FVector& worldVel, const float maxSpeed);
-	void SetMovementInput(const FVector2D& inputV);
+	void SetMovementInput(const FVector2f& inputV);
 
 	float PlayMeleeMontage(int32 montageIndex);
 	float PlayMeleeMontage_Directional(const EAttackInputDirection atkDir);
@@ -103,7 +103,7 @@ private:
 	static constexpr float WALK_BLENDSPACE_AXIS_SCALE = 100.f;
 
 	TObjectPtr<class AKfKnightCharacter> _knightCh;
-	FVector2D _lastMoveInput;
+	FVector2f _lastMoveInput;
 
 	enum class EWalkDirection {
 		Forward,

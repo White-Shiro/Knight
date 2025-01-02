@@ -31,15 +31,15 @@ void UKfTargetComponent::UpdateCtrlCamera(float dt) {
 	// Set Actor Rotation
 	FVector horizontalTargetDir = KfVectorUtils::XY0(targetLoc - selfLoc);
 	float targetDist;
+	FVector unitTargetDir;
 
-	if (!KfVectorUtils::UnitDirectionAndSize(horizontalTargetDir, horizontalTargetDir, targetDist)) {
+	if (!KfVectorUtils::UnitDirectionAndSize(horizontalTargetDir, unitTargetDir, targetDist)) {
 		return;
 	}
 
-	const auto targetDir = horizontalTargetDir / targetDist;
-	const auto horizontalFacing = KfVectorUtils::HorizontalUnitDirection(owner->GetActorForwardVector());
+	const auto horizontalUnitFacing = KfVectorUtils::HorizontalUnitDirection(owner->GetActorForwardVector());
 
-	if (horizontalFacing.Dot(targetDir) < -0.2f) {
+	if (horizontalUnitFacing.Dot(unitTargetDir) < -0.2f) {
 		ReleaseTarget();
 		return;
 	}

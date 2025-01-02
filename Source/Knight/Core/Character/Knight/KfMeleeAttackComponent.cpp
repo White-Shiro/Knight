@@ -1,8 +1,10 @@
 ﻿#include "KfMeleeAttackComponent.h"
 #include "KfCharacterAnimInstance.h"
+#include "Kismet/GameplayStatics.h"
 #include "Knight/Core/Core.h"
 #include "Knight/Core/Combat/Combat.h"
 #include "Knight/Core/Combat/HitDetectionNotifyState.h"
+#include "WorldPartition/RuntimeSpatialHash/RuntimeSpatialHashGridHelper.h"
 
 UKfMeleeAttackComponent::UKfMeleeAttackComponent() {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -21,7 +23,7 @@ void UKfMeleeAttackComponent::BeginPlay() {
 
 	SetAllowCombo(true);
 
-	_traceDelegate.BindUObject(this, &UKfMeleeAttackComponent::onTraceCompleted);
+	traceDelegate.BindUObject(this, &UKfMeleeAttackComponent::OnTraceCompleted);
 
 	if (const auto* skeletalMesh = GetOwner()->FindComponentByClass<USkeletalMeshComponent>()) {
 		_animInstance = Cast<UKfCharacterAnimInstance>(skeletalMesh->GetAnimInstance());
@@ -63,37 +65,43 @@ void UKfMeleeAttackComponent::DoMeleeAttack() {
 	_animInstance->PlayMeleeMontage(currentAttackIdx);
 }
 
-static bool _isDirectionRepeated(const FMeleeSequenceState& state, const EAttackInputDirection requestDirection) {
+static bool _isDirectionRepeated(const FMeleeSequenceState& state, EAttackInputDirection requestDirection) {
 	return state.isSequenceRunning() && state.lastAttackDirection == requestDirection;
 }
 
-void UKfMeleeAttackComponent::DoMeleeAttack_Directional(const FVector2d& movementInput) {
+bool UKfMeleeAttackComponent::DoMeleeAttack_Directional_FromVector2(const FVector2f& movementInput, float& outDuration) {
+	const auto eDirection = CombatUtils::GetAttackInputDirection(movementInput);
+	return DoMeleeAttack_Directional(eDirection, outDuration);
+}
+
+bool UKfMeleeAttackComponent::DoMeleeAttack_Directional(EAttackInputDirection meleeDirection, float& outDuration) {
+	outDuration = 0;
+
 	if (!_animInstance) {
 		UC_LOG_ERROR("Do Melee Attack Failed: No Anim Instance Found!")
-		return;
+		return false;
 	}
 
-	if (!_meleeSequenceState.bAllowCombo) return;
-	auto eDirection = CombatUtils::GetAttackInputDirection(movementInput);
+	if (!_meleeSequenceState.bAllowCombo) return false;
 
-	if(_isDirectionRepeated(_meleeSequenceState, eDirection)) {
+	if(_isDirectionRepeated(_meleeSequenceState, meleeDirection)) {
 		if (_debug) {
-			UC_MSG("Repeated Attack Direction %d", static_cast<int>(eDirection));
+			UC_MSG("Repeated Attack Direction %d", static_cast<int>(meleeDirection));
 		}
-		return;
+		return false;
 	}
 
-	_animInstance->PlayMeleeMontage_Directional(eDirection);
+	outDuration = _animInstance->PlayMeleeMontage_Directional(meleeDirection);
 	_meleeSequenceState.comboSequence++;
-	_meleeSequenceState.lastAttackDirection = eDirection;
+	_meleeSequenceState.lastAttackDirection = meleeDirection;
 
 	if (_debug) {
 		if (const auto e = StaticEnum<EAttackInputDirection>()) {
-			const FString eString = e->GetNameStringByValue(static_cast<int64>(eDirection));
+			const FString eString = e->GetNameStringByValue(static_cast<int64>(meleeDirection));
 
 			FString directionString;
 
-			switch (eDirection) {
+			switch (meleeDirection) {
 				case EAttackInputDirection::Normal: directionString = "o"; break;
 				case EAttackInputDirection::Up:		directionString = "^"; break;
 				case EAttackInputDirection::Down:	directionString = "v"; break;
@@ -104,6 +112,8 @@ void UKfMeleeAttackComponent::DoMeleeAttack_Directional(const FVector2d& movemen
 			UC_MSG("Attack Direction %s %s" , *directionString, *eString)
 		}
 	}
+
+	return true;
 }
 
 void UKfMeleeAttackComponent::DoMeleeAttack_Heavy() {
@@ -143,7 +153,7 @@ FTraceHandle UKfMeleeAttackComponent::TraceSwordHits(const FVector& start, const
 
 	const auto world = GetWorld();
 	//const bool hit = world->SweepSingleByChannel(outHitResult, start, traceEnd, swordQuat, ECollisionChannel::ECC_Pawn, sweepHitBox, traceParams);
-	const auto h = world->AsyncSweepByChannel(EAsyncTraceType::Multi, start, traceEnd, swordQuat, ECollisionChannel::ECC_Pawn, sweepHitBox, traceParams, FCollisionResponseParams::DefaultResponseParam, &_traceDelegate, 0);
+	const auto h = world->AsyncSweepByChannel(EAsyncTraceType::Multi, start, traceEnd, swordQuat, ECollisionChannel::ECC_Pawn, sweepHitBox, traceParams, FCollisionResponseParams::DefaultResponseParam, &traceDelegate, 0);
 
 	if (_debug) {
 		const auto center = start + (direction * halfHeight);
@@ -159,7 +169,7 @@ static FAttackRequest CreateAttackRequest(const FHitResult& hitResult) {
 	return request;
 }
 
-void UKfMeleeAttackComponent::OnSwordHitResult(const FHitResult& hitResult) const {
+void UKfMeleeAttackComponent::OnSwordHitResult(const FHitResult& hitResult) {
 	auto* attackable = Cast<IReactToAttack>(hitResult.GetActor());
 	if (!attackable) return;
 
@@ -175,22 +185,61 @@ void UKfMeleeAttackComponent::OnSwordHitResult(const FHitResult& hitResult) cons
 		}
 	}
 
+	const auto* world = GetWorld();
+	if (!IsValid(world)) return;
+
+	if (_swordHitEffectSet.bUseHitStop) {
+		ScheduleHitStop(_swordHitEffectSet.hitStopDuration, _swordHitEffectSet.hitStopTimeScale);
+	}
+
 	if (_debug) {
-		DrawDebugSphere(GetWorld(), hitResult.ImpactPoint, 100.f, 4, FColor::Red, _persistentLine, 1.f, 0, 1.f);
+		DrawDebugSphere(world, hitResult.ImpactPoint, 100.f, 4, FColor::Red, _persistentLine, 1.f, 0, 1.f);
 	}
 }
 
-void UKfMeleeAttackComponent::onTraceCompleted(const FTraceHandle& handle, FTraceDatum& data) {
+void UKfMeleeAttackComponent::OnTraceCompleted(const FTraceHandle& handle, FTraceDatum& data) {
 	if (data.OutHits.Num() <= 0) return;
 	for (const auto& hit : data.OutHits) {
 		OnSwordHitResult(hit);
 	}
 }
 
+void UKfMeleeAttackComponent::ScheduleHitStop(float duration, float timeScale) {\
+	const auto* world = GetWorld();
+	auto& tm = world->GetTimerManager();
+
+	if (hitStopTimerHandle.IsValid()) {
+		tm.ClearTimer(hitStopTimerHandle);
+	}
+
+#if 0
+	UGameplayStatics::SetGlobalTimeDilation(world, _swordHitEffectSet.hitStopTimeScale);
+
+	tm.SetTimer(hitStopTimerHandle, [this]() {
+		UGameplayStatics::SetGlobalTimeDilation(this, 1.f);
+	}, _swordHitEffectSet.hitStopDuration, false);
+#elseif 0
+	auto * skMesh = _animInstance->GetSkelMeshComponent();
+	if (!IsValid(skMesh)) return;
+	skMesh->GlobalAnimRateScale = timeScale;
+	tm.SetTimer(hitStopTimerHandle, [skMesh]() {
+		skMesh->GlobalAnimRateScale = 1.f;
+	}, duration, false);
+#else
+
+	_animInstance->Montage_SetPlayRate(nullptr, timeScale);
+	tm.SetTimer(hitStopTimerHandle, [this]() {
+		_animInstance->Montage_SetPlayRate(nullptr, 1);
+	}, duration, false);
+
+#endif
+
+}
+
 bool UKfMeleeAttackComponent::TrySwordHitOnce(const FVector& start, const FVector& direction, bool isSegment) {
 	const auto h = TraceSwordHits(start, direction, _hitBoxLength, _hitBoxRadius, isSegment);
 	if (h.IsValid()) {
-		_traceHandle = h;
+		traceHandle = h;
 	}
 	return h.IsValid();
 }

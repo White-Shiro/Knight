@@ -1,11 +1,10 @@
 ﻿#include "HitDetectionNotifyState.h"
 #include "Combat.h"
 
-static constexpr int MIN_SEQUENCE_ID = -100000;
-static constexpr int MAX_SEQUENCE_ID = 100000;
+static constexpr int MAX_SEQUENCE_ID = 200000;
 
 UHitDetectionNotifyState::UHitDetectionNotifyState() {
-	_sequenceId = FMath::RandRange(MIN_SEQUENCE_ID, MAX_SEQUENCE_ID);
+	_sequenceId = FMath::RandRange(0, MAX_SEQUENCE_ID);
 }
 
 void UHitDetectionNotifyState::NotifyBegin(USkeletalMeshComponent* MeshComp,
@@ -13,11 +12,9 @@ void UHitDetectionNotifyState::NotifyBegin(USkeletalMeshComponent* MeshComp,
                                            float TotalDuration,
                                            const FAnimNotifyEventReference& EventReference) {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
-	_target = Cast<IReactToAnimHitDectectNotifyState>(MeshComp->GetOwner());
+	_target = MeshComp->GetOwner<IReactToAnimHitDectectNotifyState>();
 	_sequenceId++;
-	if (_sequenceId > MAX_SEQUENCE_ID) {
-		_sequenceId = MIN_SEQUENCE_ID;
-	};
+	_sequenceId = _sequenceId % MAX_SEQUENCE_ID;
 }
 
 void UHitDetectionNotifyState::NotifyTick(USkeletalMeshComponent* MeshComp,
